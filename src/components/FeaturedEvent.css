@@ -1,0 +1,270 @@
+.featured-event {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: var(--deep-green);
+}
+
+.featured-event__visual {
+  position: relative;
+  min-height: 720px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 75% 35%,
+      rgba(47, 168, 154, 0.28),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 25% 80%,
+      rgba(201, 168, 92, 0.14),
+      transparent 30%
+    ),
+    linear-gradient(
+      120deg,
+      #061512 0%,
+      #0b3029 48%,
+      #09241f 100%
+    );
+}
+
+.featured-event__overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(4, 18, 15, 0.96) 0%,
+      rgba(4, 18, 15, 0.72) 45%,
+      rgba(4, 18, 15, 0.25) 100%
+    );
+  z-index: 1;
+}
+
+.featured-event__pattern {
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.3) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      rgba(255, 255, 255, 0.3) 1px,
+      transparent 1px
+    );
+
+  background-size: 90px 90px;
+
+  mask-image: linear-gradient(
+    to right,
+    black,
+    transparent 80%
+  );
+}
+
+.featured-event__content {
+  position: relative;
+  z-index: 2;
+  padding-top: 100px;
+  padding-bottom: 100px;
+}
+
+.featured-event__label {
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+}
+
+.featured-event h2 {
+  margin-top: 22px;
+
+  max-width: 850px;
+
+  font-family: "Manrope", sans-serif;
+  font-size: clamp(64px, 9vw, 132px);
+  line-height: 0.84;
+  letter-spacing: -0.065em;
+
+  color: var(--white);
+}
+
+.featured-event h2 span {
+  color: var(--teal);
+}
+
+.featured-event__description {
+  max-width: 570px;
+  margin-top: 35px;
+
+  color: var(--text-light);
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.featured-event__details {
+  display: flex;
+  align-items: center;
+  gap: 35px;
+  margin-top: 32px;
+}
+
+.featured-event__details div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  color: var(--ivory);
+
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.featured-event__details svg {
+  color: var(--gold);
+}
+
+.featured-event__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+
+  margin-top: 42px;
+  padding: 15px 23px;
+
+  border: 1px solid rgba(201, 168, 92, 0.55);
+
+  color: var(--white);
+
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+
+  transition: var(--transition);
+}
+
+.featured-event__button svg {
+  transition: transform 0.4s ease;
+}
+
+.featured-event__button:hover {
+  background: var(--gold);
+  color: var(--deep-green);
+  border-color: var(--gold);
+}
+
+.featured-event__button:hover svg {
+  transform: translate(4px, -4px);
+}
+
+.featured-event__side-text {
+  position: absolute;
+  right: 38px;
+  top: 50%;
+  z-index: 3;
+
+  writing-mode: vertical-rl;
+
+  color: rgba(255, 255, 255, 0.38);
+
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+
+  transform: translateY(-50%);
+}
+
+/* Decorative circle */
+
+.featured-event__visual::after {
+  content: "";
+
+  position: absolute;
+  right: -180px;
+  bottom: -220px;
+
+  width: 650px;
+  height: 650px;
+
+  border: 1px solid rgba(47, 168, 154, 0.2);
+  border-radius: 50%;
+
+  box-shadow:
+    0 0 0 80px rgba(47, 168, 154, 0.025),
+    0 0 0 160px rgba(47, 168, 154, 0.018);
+}
+
+/* Tablet */
+
+@media (max-width: 900px) {
+  .featured-event__visual {
+    min-height: 650px;
+  }
+
+  .featured-event h2 {
+    font-size: clamp(58px, 11vw, 100px);
+  }
+
+  .featured-event__side-text {
+    display: none;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+  .featured-event__visual {
+    min-height: 680px;
+  }
+
+  .featured-event__overlay {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(4, 18, 15, 0.95),
+        rgba(4, 18, 15, 0.72)
+      );
+  }
+
+  .featured-event__content {
+    padding-top: 80px;
+    padding-bottom: 80px;
+  }
+
+  .featured-event h2 {
+    font-size: clamp(52px, 16vw, 78px);
+    line-height: 0.88;
+  }
+
+  .featured-event__description {
+    margin-top: 28px;
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  .featured-event__details {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 28px;
+  }
+
+  .featured-event__button {
+    margin-top: 35px;
+  }
+
+  .featured-event__visual::after {
+    width: 450px;
+    height: 450px;
+    right: -250px;
+    bottom: -160px;
+  }
+}

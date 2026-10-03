@@ -1,0 +1,23 @@
+:root {
+  --deep-green: #071a17;
+  --emerald: #0f5c4d;
+  --teal: #2fa89a;
+  --gold: #c9a85c;
+
+  --ivory: #f5f2e9;
+  --white: #ffffff;
+
+  --text-dark: #10201d;
+  --text-light: #b8c9c4;
+
+  --border-dark: rgba(255, 255, 255, 0.12);
+  --border-light: rgba(15, 92, 77, 0.15);
+
+  --container: 1280px;
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 28px;
+
+  --transition: 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
