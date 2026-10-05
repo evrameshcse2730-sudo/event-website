@@ -206,3 +206,135 @@
     height: 42px;
   }
 }
+.testimonials-section {
+  background: var(--deep-green);
+  color: var(--white);
+}
+
+.testimonials-heading {
+  margin-bottom: 70px;
+}
+
+.testimonials-heading .section-label {
+  color: var(--gold);
+}
+
+.testimonial-main {
+  position: relative;
+  max-width: 1050px;
+  margin: 0 auto;
+  padding: 70px 80px;
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-lg);
+}
+
+.testimonial-quote-mark {
+  position: absolute;
+  top: 35px;
+  left: 45px;
+  color: var(--gold);
+  font-family: Georgia, serif;
+  font-size: 90px;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.testimonial-main blockquote {
+  position: relative;
+  max-width: 850px;
+  font-family: "Manrope", sans-serif;
+  font-size: clamp(26px, 4vw, 48px);
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+
+.testimonial-client-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 45px;
+}
+
+.testimonial-client-image,
+.testimonial-client-placeholder {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.testimonial-client-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--emerald);
+  color: var(--white);
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.testimonial-client-info h3 {
+  font-family: "Manrope", sans-serif;
+  font-size: 16px;
+}
+
+.testimonial-client-info p {
+  margin-top: 5px;
+  color: var(--text-light);
+  font-size: 13px;
+}
+
+.testimonial-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 45px;
+}
+
+.testimonial-controls button {
+  width: 45px;
+  height: 45px;
+  border: 1px solid var(--border-dark);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--white);
+  font-size: 18px;
+  transition: var(--transition);
+}
+
+.testimonial-controls button:hover {
+  background: var(--gold);
+  color: var(--deep-green);
+  border-color: var(--gold);
+}
+
+.testimonial-controls span {
+  color: var(--text-light);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+
+.testimonial-loading {
+  color: var(--text-light);
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .testimonials-heading {
+    margin-bottom: 45px;
+  }
+
+  .testimonial-main {
+    padding: 55px 25px;
+  }
+
+  .testimonial-quote-mark {
+    top: 20px;
+    left: 20px;
+    font-size: 65px;
+  }
+
+  .testimonial-main blockquote {
+    font-size: 25px;
+  }
+}

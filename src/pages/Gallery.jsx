@@ -1,128 +1,202 @@
-import { motion } from "framer-motion";
-import { ArrowUpRight } from "lucide-react";
-
+import { useEffect, useState } from "react";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "../firebase/config";
 import "./Gallery.css";
 
-const galleryItems = [
-  {
-    id: 1,
-    title: "Corporate Experience",
-    category: "Corporate",
-    size: "large",
-  },
-  {
-    id: 2,
-    title: "Wedding Celebration",
-    category: "Wedding",
-    size: "small",
-  },
-  {
-    id: 3,
-    title: "Brand Launch",
-    category: "Product Launch",
-    size: "small",
-  },
-  {
-    id: 4,
-    title: "Annual Conference",
-    category: "Conference",
-    size: "large",
-  },
-  {
-    id: 5,
-    title: "Cultural Evening",
-    category: "Cultural",
-    size: "small",
-  },
-  {
-    id: 6,
-    title: "Leadership Summit",
-    category: "Corporate",
-    size: "small",
-  },
-];
-
 function Gallery() {
+  const [gallery, setGallery] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState("All");
+
+  useEffect(() => {
+    const fetchGallery = async () => {
+      try {
+        const galleryRef = collection(db, "gallery");
+
+        const q = query(
+          galleryRef,
+          where("status", "==", "published")
+        );
+
+        const snapshot = await getDocs(q);
+
+        const galleryData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        console.log("Gallery Data:", galleryData);
+
+        setGallery(galleryData);
+      } catch (error) {
+        console.error("Gallery Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGallery();
+  }, []);
+
+  // Categories
+  const categories = [
+    "All",
+    ...new Set(
+      gallery
+        .map((item) => item.category)
+        .filter((category) => category)
+    ),
+  ];
+
+  // Filter gallery
+  const filteredGallery =
+    activeCategory === "All"
+      ? gallery
+      : gallery.filter(
+          (item) => item.category === activeCategory
+        );
+
   return (
-    <div className="gallery-page">
+    <main className="gallery-page">
 
-      <section className="gallery-page__hero">
+      {/* HERO */}
+      <section className="gallery-hero section">
         <div className="container">
-
-          <motion.span
-            className="section-label"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
+          <span className="section-label">
             OUR WORK
-          </motion.span>
+          </span>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.1 }}
-          >
+          <h1 className="section-title">
             MOMENTS
             <br />
-            <span>THAT MATTER.</span>
-          </motion.h1>
+            THAT MATTER.
+          </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 25 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-          >
-            A collection of experiences, celebrations and moments
-            we have helped bring to life.
-          </motion.p>
-
+          <p className="gallery-intro">
+            A collection of experiences, celebrations and
+            moments brought to life through thoughtful event
+            experiences.
+          </p>
         </div>
       </section>
 
-      <section className="gallery-page__content section">
+      {/* GALLERY */}
+      <section className="gallery-content section">
         <div className="container">
 
-          <div className="gallery-page__grid">
+          {/* LOADING */}
+          {loading && (
+            <div className="gallery-loading">
+              <p>Loading gallery...</p>
+            </div>
+          )}
 
-            {galleryItems.map((item, index) => (
-              <motion.article
-                key={item.id}
-                className={`gallery-page__item gallery-page__item--${item.size}`}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
-                transition={{
-                  duration: 0.7,
-                  delay: index * 0.08,
-                }}
-              >
-                <div className="gallery-page__visual">
-                  <div className="gallery-page__placeholder">
-                    <span>EVENT IMAGE</span>
-                  </div>
+          {/* EMPTY */}
+          {!loading && gallery.length === 0 && (
+            <div className="gallery-empty">
+              <h2>No gallery images yet.</h2>
 
-                  <div className="gallery-page__overlay">
-                    <span>{item.category}</span>
+              <p>
+                New event moments will appear here soon.
+              </p>
+            </div>
+          )}
 
-                    <div className="gallery-page__info">
-                      <h2>{item.title}</h2>
+          {/* GALLERY DATA */}
+          {!loading && gallery.length > 0 && (
+            <>
+              {/* FILTERS */}
+              <div className="gallery-filters">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    className={
+                      activeCategory === category
+                        ? "active"
+                        : ""
+                    }
+                    onClick={() =>
+                      setActiveCategory(category)
+                    }
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
 
-                      <span className="gallery-page__arrow">
-                        <ArrowUpRight size={20} />
-                      </span>
-                    </div>
-                  </div>
+              {/* GRID */}
+              {filteredGallery.length > 0 ? (
+                <div className="gallery-grid">
+
+                  {filteredGallery.map((item) => (
+                    <article
+                      className="gallery-item"
+                      key={item.id}
+                    >
+                      <div className="gallery-image-wrap">
+
+                        {/* IMAGE */}
+                        {item.imageUrl ? (
+                          <img
+                            src={item.imageUrl}
+                            alt={
+                              item.title ||
+                              "Event gallery image"
+                            }
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="gallery-image-placeholder">
+                            No Image
+                          </div>
+                        )}
+
+                        {/* OVERLAY */}
+                        <div className="gallery-overlay">
+
+                          {item.category && (
+                            <span>
+                              {item.category}
+                            </span>
+                          )}
+
+                          <h3>
+                            {item.title ||
+                              "Event Moment"}
+                          </h3>
+
+                          {item.event && (
+                            <p>
+                              {item.event}
+                            </p>
+                          )}
+
+                        </div>
+
+                      </div>
+                    </article>
+                  ))}
+
                 </div>
-              </motion.article>
-            ))}
+              ) : (
+                <div className="gallery-empty">
+                  <h2>
+                    No images in this category.
+                  </h2>
 
-          </div>
+                  <p>
+                    Try selecting another category.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
 
         </div>
       </section>
 
-    </div>
+    </main>
   );
 }
 

@@ -1,121 +1,240 @@
-import { motion } from "framer-motion";
-import { ArrowUpRight } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { Link } from "react-router-dom";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+} from "lucide-react";
+import { db } from "../firebase/config";
 import "./GalleryPreview.css";
 
-const galleryItems = [
-  {
-    id: 1,
-    title: "Corporate Experience",
-    category: "Corporate",
-    size: "tall",
-  },
-  {
-    id: 2,
-    title: "Wedding Celebration",
-    category: "Wedding",
-    size: "wide",
-  },
-  {
-    id: 3,
-    title: "Brand Launch",
-    category: "Product Launch",
-    size: "normal",
-  },
-  {
-    id: 4,
-    title: "Annual Conference",
-    category: "Conference",
-    size: "normal",
-  },
-  {
-    id: 5,
-    title: "Cultural Evening",
-    category: "Cultural",
-    size: "wide",
-  },
-];
-
 function GalleryPreview() {
+  const [gallery, setGallery] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const carouselRef = useRef(null);
+
+  useEffect(() => {
+    const fetchGallery = async () => {
+      try {
+        const q = query(
+          collection(db, "gallery"),
+          where("status", "==", "published")
+        );
+
+        const snapshot = await getDocs(q);
+
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        data.sort((a, b) => {
+          const aTime = a.createdAt?.seconds || 0;
+          const bTime = b.createdAt?.seconds || 0;
+
+          return bTime - aTime;
+        });
+
+        setGallery(data);
+      } catch (error) {
+        console.error("Gallery Preview Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGallery();
+  }, []);
+
+  const scrollCarousel = (direction) => {
+    if (!carouselRef.current) return;
+
+    const card = carouselRef.current.querySelector(
+      ".gallery-carousel-item"
+    );
+
+    if (!card) return;
+
+    const cardWidth = card.offsetWidth + 16;
+
+    carouselRef.current.scrollBy({
+      left:
+        direction === "next"
+          ? cardWidth
+          : -cardWidth,
+      behavior: "smooth",
+    });
+  };
+
+  /*
+    Cloudinary optimization.
+
+    c_fill  = fills the card
+    g_auto  = detects important subject
+    w/h     = optimized dimensions
+    q_auto  = automatic quality
+    f_auto  = automatic image format
+  */
+  const getGalleryImage = (url) => {
+    if (!url) return "";
+
+    if (!url.includes("res.cloudinary.com")) {
+      return url;
+    }
+
+    if (!url.includes("/upload/")) {
+      return url;
+    }
+
+    const parts = url.split("/upload/");
+
+    return `${parts[0]}/upload/c_fill,g_auto,w_1200,h_800,q_auto,f_auto/${parts[1]}`;
+  };
+
   return (
-    <section className="gallery-preview">
+    <section className="gallery-preview section">
       <div className="container">
-        <div className="gallery-preview__header">
-          <motion.div
-            className="gallery-preview__label"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            THE GALLERY
-          </motion.div>
 
-          <div className="gallery-preview__heading">
-            <motion.h2
-              initial={{ opacity: 0, y: 35 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-            >
-              MOMENTS THAT
+        {/* HEADER */}
+
+        <div className="gallery-preview-header">
+
+          <div>
+            <span className="section-label">
+              OUR WORK
+            </span>
+
+            <h2 className="section-title">
+              MOMENTS
               <br />
-              <span>STAY WITH YOU.</span>
-            </motion.h2>
+              THAT MATTER.
+            </h2>
+          </div>
 
-            <motion.a
-              href="/gallery"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.7, delay: 0.2 }}
+          <div className="gallery-preview-actions">
+
+            <Link
+              to="/gallery"
+              className="gallery-view-all"
             >
-              VIEW FULL GALLERY
+              <span>View Full Gallery</span>
               <ArrowUpRight size={17} />
-            </motion.a>
+            </Link>
+
+            {!loading && gallery.length > 1 && (
+              <div className="gallery-carousel-controls">
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    scrollCarousel("prev")
+                  }
+                  aria-label="Previous gallery image"
+                >
+                  <ArrowLeft size={18} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    scrollCarousel("next")
+                  }
+                  aria-label="Next gallery image"
+                >
+                  <ArrowRight size={18} />
+                </button>
+
+              </div>
+            )}
+
           </div>
         </div>
 
-        <div className="gallery-preview__grid">
-          {galleryItems.map((item, index) => (
-            <motion.a
-              href="/gallery"
-              key={item.id}
-              className={`gallery-item gallery-item--${item.size}`}
-              initial={{
-                opacity: 0,
-                y: 40,
-              }}
-              whileInView={{
-                opacity: 1,
-                y: 0,
-              }}
-              viewport={{ once: true }}
-              transition={{
-                duration: 0.7,
-                delay: index * 0.1,
-              }}
-            >
-              <div className="gallery-item__visual">
-                <div className="gallery-item__placeholder">
-                  <span>GALLERY IMAGE</span>
-                </div>
+        {/* LOADING */}
 
-                <div className="gallery-item__overlay"></div>
+        {loading && (
+          <div className="gallery-preview-loading">
+            Loading gallery...
+          </div>
+        )}
 
-                <div className="gallery-item__info">
-                  <div>
-                    <span>{item.category}</span>
-                    <h3>{item.title}</h3>
+        {/* EMPTY */}
+
+        {!loading && gallery.length === 0 && (
+          <div className="gallery-preview-empty">
+            <h3>No gallery images yet.</h3>
+
+            <p>
+              Published event moments will appear here.
+            </p>
+          </div>
+        )}
+
+        {/* CAROUSEL */}
+
+        {!loading && gallery.length > 0 && (
+          <div
+            className="gallery-carousel"
+            ref={carouselRef}
+          >
+
+            {gallery.map((item) => (
+              <Link
+                to="/gallery"
+                className="gallery-carousel-item"
+                key={item.id}
+              >
+
+                <div className="gallery-carousel-image">
+
+                  {item.imageUrl ? (
+                    <img
+                      src={getGalleryImage(item.imageUrl)}
+                      alt={
+                        item.title ||
+                        "Event gallery image"
+                      }
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="gallery-preview-placeholder">
+                      No Image
+                    </div>
+                  )}
+
+                  <div className="gallery-carousel-overlay">
+
+                    <div className="gallery-carousel-content">
+
+                      {item.category && (
+                        <span className="gallery-preview-category">
+                          {item.category}
+                        </span>
+                      )}
+
+                      <h3>
+                        {item.title ||
+                          "Event Moment"}
+                      </h3>
+
+                    </div>
+
+                    <span className="gallery-preview-arrow">
+                      <ArrowUpRight size={18} />
+                    </span>
+
                   </div>
 
-                  <div className="gallery-item__arrow">
-                    <ArrowUpRight size={18} />
-                  </div>
                 </div>
-              </div>
-            </motion.a>
-          ))}
-        </div>
+
+              </Link>
+            ))}
+
+          </div>
+        )}
+
       </div>
     </section>
   );

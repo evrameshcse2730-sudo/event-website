@@ -1,7 +1,6 @@
+import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
-import { useEffect, useState } from "react";
-
 import { auth } from "../firebase/config";
 
 function ProtectedRoute() {
@@ -9,10 +8,13 @@ function ProtectedRoute() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setChecking(false);
-    });
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (currentUser) => {
+        setUser(currentUser);
+        setChecking(false);
+      }
+    );
 
     return () => unsubscribe();
   }, []);
@@ -25,17 +27,23 @@ function ProtectedRoute() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#071a17",
-          color: "#ffffff",
+          background: "#071A17",
+          color: "#FFFFFF",
+          fontFamily: "Arial, sans-serif",
         }}
       >
-        Checking access...
+        Checking authentication...
       </div>
     );
   }
 
   if (!user) {
-    return <Navigate to="/admin/login" replace />;
+    return (
+      <Navigate
+        to="/admin/login"
+        replace
+      />
+    );
   }
 
   return <Outlet />;
