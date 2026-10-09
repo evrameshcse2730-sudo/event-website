@@ -85,7 +85,11 @@ function EventDetails() {
 
         const data = matchedDocument.data();
         const image =
-          data.imageUrl || data.image || data.coverImage || "";
+  data.imageUrl ||
+  data.image ||
+  data.coverImage ||
+  (Array.isArray(data.imageUrls) ? data.imageUrls[0] : "") ||
+  "";
 
         const imageUrls = [
           ...new Set([
