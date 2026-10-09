@@ -566,3 +566,61 @@
     grid-template-columns: 1fr;
   }
 }
+/* Event images - desktop and mobile fix */
+
+.event-details__hero-bg {
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center center;
+}
+
+.event-details__visual-box {
+  position: relative;
+  min-height: 500px;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center center;
+}
+
+.event-details__gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.event-details__gallery-item {
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.event-details__gallery-item img {
+  display: block;
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+}
+
+@media (max-width: 900px) {
+  .event-details__gallery-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .event-details__visual-box {
+    min-height: 400px;
+  }
+}
+
+@media (max-width: 600px) {
+  .event-details__gallery-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .event-details__gallery-item img {
+    height: 260px;
+  }
+
+  .event-details__visual-box {
+    min-height: 300px;
+  }
+}
