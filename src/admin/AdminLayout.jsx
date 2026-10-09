@@ -12,11 +12,15 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { signOut } from "firebase/auth";
 
+import { auth } from "../firebase/config";
 import "./AdminLayout.css";
 
 function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
   const navigate = useNavigate();
 
   const navigation = [
@@ -57,20 +61,46 @@ function AdminLayout() {
     },
   ];
 
-  const handleLogout = () => {
-    navigate("/admin/login");
+  // ==========================================
+  // LOGOUT
+  // ==========================================
+
+  const handleLogout = async () => {
+    if (loggingOut) return;
+
+    try {
+      setLoggingOut(true);
+
+      // Actually sign out from Firebase
+      await signOut(auth);
+
+      // Redirect after Firebase logout
+      navigate("/admin/login", {
+        replace: true,
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+
+      alert("Unable to logout. Please try again.");
+
+      setLoggingOut(false);
+    }
   };
 
   return (
     <div className="admin-layout">
 
-      {/* MOBILE HEADER */}
+      {/* ==========================================
+          MOBILE HEADER
+      ========================================== */}
 
       <header className="admin-mobile-header">
 
         <button
+          type="button"
           className="admin-menu-button"
           onClick={() => setSidebarOpen(true)}
+          aria-label="Open admin menu"
         >
           <Menu size={22} />
         </button>
@@ -81,7 +111,10 @@ function AdminLayout() {
 
       </header>
 
-      {/* OVERLAY */}
+
+      {/* ==========================================
+          OVERLAY
+      ========================================== */}
 
       {sidebarOpen && (
         <div
@@ -90,11 +123,16 @@ function AdminLayout() {
         />
       )}
 
-      {/* SIDEBAR */}
+
+      {/* ==========================================
+          SIDEBAR
+      ========================================== */}
 
       <aside
         className={`admin-sidebar ${
-          sidebarOpen ? "admin-sidebar--open" : ""
+          sidebarOpen
+            ? "admin-sidebar--open"
+            : ""
         }`}
       >
 
@@ -105,17 +143,21 @@ function AdminLayout() {
           </div>
 
           <button
+            type="button"
             className="admin-sidebar__close"
             onClick={() => setSidebarOpen(false)}
+            aria-label="Close admin menu"
           >
             <X size={20} />
           </button>
 
         </div>
 
+
         <div className="admin-sidebar__label">
           MANAGEMENT
         </div>
+
 
         <nav className="admin-sidebar__nav">
 
@@ -129,55 +171,87 @@ function AdminLayout() {
                 end={item.path === "/admin"}
                 className={({ isActive }) =>
                   `admin-nav-link ${
-                    isActive ? "admin-nav-link--active" : ""
+                    isActive
+                      ? "admin-nav-link--active"
+                      : ""
                   }`
                 }
-                onClick={() => setSidebarOpen(false)}
+                onClick={() =>
+                  setSidebarOpen(false)
+                }
               >
                 <Icon size={18} />
-                <span>{item.label}</span>
+
+                <span>
+                  {item.label}
+                </span>
               </NavLink>
             );
           })}
 
         </nav>
 
+
+        {/* ==========================================
+            LOGOUT
+        ========================================== */}
+
         <div className="admin-sidebar__bottom">
 
           <button
+            type="button"
             className="admin-logout"
             onClick={handleLogout}
+            disabled={loggingOut}
           >
             <LogOut size={18} />
-            <span>Logout</span>
+
+            <span>
+              {loggingOut
+                ? "Logging out..."
+                : "Logout"}
+            </span>
           </button>
 
         </div>
 
       </aside>
 
-      {/* MAIN */}
+
+      {/* ==========================================
+          MAIN
+      ========================================== */}
 
       <main className="admin-main">
 
         <div className="admin-main__topbar">
 
           <div>
-            <span>ADMIN PANEL</span>
+            <span>
+              ADMIN PANEL
+            </span>
           </div>
 
           <div className="admin-user">
+
             <div className="admin-user__avatar">
               A
             </div>
 
             <div>
-              <strong>Administrator</strong>
-              <small>Website Manager</small>
+              <strong>
+                Administrator
+              </strong>
+
+              <small>
+                Website Manager
+              </small>
             </div>
+
           </div>
 
         </div>
+
 
         <div className="admin-main__content">
           <Outlet />

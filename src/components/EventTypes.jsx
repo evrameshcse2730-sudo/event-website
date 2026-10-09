@@ -1,57 +1,179 @@
+
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
+import {
+  collection,
+  getDocs,
+} from "firebase/firestore";
+
+import { db } from "../firebase/config";
 import "./EventTypes.css";
 
-const eventTypes = [
+const fallbackEventTypes = [
   {
+    id: "corporate-events",
     number: "01",
     title: "Corporate Events",
     description:
       "Conferences, business gatherings, leadership meets and professional experiences.",
     className: "event-card-large",
+    slug: "corporate-events",
   },
   {
+    id: "weddings",
     number: "02",
     title: "Weddings & Celebrations",
     description:
       "Thoughtfully planned celebrations designed around your story and special moments.",
     className: "event-card-tall",
+    slug: "weddings",
   },
   {
+    id: "conferences",
     number: "03",
     title: "Conferences & Summits",
     description:
       "Large-scale gatherings created for meaningful conversations and connections.",
     className: "event-card-small",
+    slug: "conferences",
   },
   {
+    id: "product-launches",
     number: "04",
     title: "Product Launches",
     description:
       "Launch experiences designed to create attention, energy and lasting impressions.",
     className: "event-card-small",
+    slug: "product-launches",
   },
   {
+    id: "cultural-events",
     number: "05",
     title: "Cultural Events",
     description:
       "Celebrations that bring culture, creativity and people together.",
     className: "event-card-wide",
+    slug: "cultural-events",
   },
 ];
 
 function EventTypes() {
-  return (
-    <section className="event-types" id="events">
-      <div className="event-types-container">
+  const [eventTypes, setEventTypes] = useState(
+    fallbackEventTypes
+  );
 
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadEventTypes = async () => {
+      try {
+        const snapshot = await getDocs(
+          collection(db, "eventTypes")
+        );
+
+        const firebaseEventTypes = snapshot.docs
+          .map((document) => ({
+            id: document.id,
+            ...document.data(),
+          }))
+          .filter(
+            (event) => event.status === "published"
+          )
+          .sort((a, b) => {
+            const dateA =
+              a.createdAt?.toMillis?.() ?? 0;
+
+            const dateB =
+              b.createdAt?.toMillis?.() ?? 0;
+
+            return dateA - dateB;
+          })
+          .map((data, index) => {
+            const generatedSlug =
+              data.title
+                ?.toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/(^-|-$)/g, "") || "";
+
+            return {
+              id: data.id,
+              number: String(index + 1).padStart(
+                2,
+                "0"
+              ),
+              title:
+                data.title || "Untitled Event Type",
+              description: data.description || "",
+              slug: data.slug || generatedSlug,
+              className:
+                index === 0
+                  ? "event-card-large"
+                  : index === 1
+                  ? "event-card-tall"
+                  : index === 2 || index === 3
+                  ? "event-card-small"
+                  : "event-card-wide",
+            };
+          });
+
+        if (isMounted) {
+          if (firebaseEventTypes.length > 0) {
+            setEventTypes(firebaseEventTypes);
+          } else {
+            setEventTypes([]);
+          }
+        }
+      } catch (error) {
+        console.error(
+          "Error loading event types from Firebase:",
+          error
+        );
+
+        if (isMounted) {
+          setEventTypes(fallbackEventTypes);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadEventTypes();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  return (
+    <section
+      className="event-types"
+      id="events"
+    >
+      <div className="event-types-container">
         {/* Header */}
         <motion.div
           className="event-types-header"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.8 }}
+          initial={{
+            opacity: 0,
+            y: 30,
+          }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+          }}
+          viewport={{
+            once: true,
+            amount: 0.3,
+          }}
+          transition={{
+            duration: 0.8,
+          }}
         >
           <div className="event-types-label">
             <span>02</span>
@@ -70,57 +192,88 @@ function EventTypes() {
           </h2>
 
           <p>
-            From corporate gatherings to unforgettable celebrations,
-            we create experiences that bring people, brands and ideas
-            together.
+            From corporate gatherings to
+            unforgettable celebrations,
+            we create experiences that bring
+            people, brands and ideas together.
           </p>
         </motion.div>
 
-        {/* Cards */}
+        {/* Event Type Cards */}
         <div className="event-types-grid">
-          {eventTypes.map((event, index) => (
-            <motion.a
-              href={`/events/${event.title
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, "-")
-                .replace(/(^-|-$)/g, "")}`}
-              className={`event-type-card ${event.className}`}
-              key={event.number}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.15 }}
-              transition={{
-                duration: 0.7,
-                delay: index * 0.1,
+          {loading ? (
+            <div
+              style={{
+                gridColumn: "1 / -1",
+                padding: "60px 20px",
+                textAlign: "center",
+                opacity: 0.6,
               }}
-              whileHover={{ y: -8 }}
             >
-              <div className="event-card-bg"></div>
+              Loading event types...
+            </div>
+          ) : eventTypes.length === 0 ? (
+            <div
+              style={{
+                gridColumn: "1 / -1",
+                padding: "60px 20px",
+                textAlign: "center",
+                opacity: 0.6,
+              }}
+            >
+              No published event types available.
+            </div>
+          ) : (
+            eventTypes.map((event, index) => (
+              <motion.a
+                href={`/events/${event.slug}`}
+                className={`event-type-card ${event.className}`}
+                key={event.id}
+                initial={{
+                  opacity: 0,
+                  y: 50,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                viewport={{
+                  once: true,
+                  amount: 0.15,
+                }}
+                transition={{
+                  duration: 0.7,
+                  delay: index * 0.1,
+                }}
+                whileHover={{
+                  y: -8,
+                }}
+              >
+                <div className="event-card-bg"></div>
 
-              <div className="event-card-content">
-                <div className="event-card-top">
-                  <span>{event.number}</span>
+                <div className="event-card-content">
+                  <div className="event-card-top">
+                    <span>{event.number}</span>
 
-                  <div className="event-card-arrow">
-                    <ArrowUpRight size={18} />
+                    <div className="event-card-arrow">
+                      <ArrowUpRight size={18} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3>{event.title}</h3>
+                    <p>{event.description}</p>
+                  </div>
+
+                  <div className="event-card-bottom">
+                    <span>EXPLORE</span>
+                    <span className="event-card-line"></span>
                   </div>
                 </div>
-
-                <div>
-                  <h3>{event.title}</h3>
-
-                  <p>{event.description}</p>
-                </div>
-
-                <div className="event-card-bottom">
-                  <span>EXPLORE</span>
-                  <span className="event-card-line"></span>
-                </div>
-              </div>
-            </motion.a>
-          ))}
+              </motion.a>
+            ))
+          )}
         </div>
-
       </div>
     </section>
   );

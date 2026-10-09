@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 import {
   Plus,
   Search,
@@ -8,63 +9,101 @@ import {
   MapPin,
   CalendarDays,
   X,
+  ImagePlus,
 } from "lucide-react";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp,
+} from "firebase/firestore";
 
+import { db } from "../firebase/config";
 import EventForm from "./EventForm";
-
 import "./EventsManager.css";
 
-const initialEvents = [
-  {
-    id: 1,
-    title: "Business Summit 2026",
-    type: "Corporate Event",
-    date: "2026-10-18",
-    location: "Hyderabad",
-    status: "upcoming",
-    publishStatus: "published",
-  },
-  {
-    id: 2,
-    title: "Wedding Celebration",
-    type: "Wedding",
-    date: "2026-10-25",
-    location: "Vijayawada",
-    status: "upcoming",
-    publishStatus: "published",
-  },
-  {
-    id: 3,
-    title: "Brand Launch Experience",
-    type: "Product Launch",
-    date: "2026-11-08",
-    location: "Bengaluru",
-    status: "upcoming",
-    publishStatus: "draft",
-  },
-  {
-    id: 4,
-    title: "Leadership Summit",
-    type: "Conference",
-    date: "2025-12-14",
-    location: "Hyderabad",
-    status: "completed",
-    publishStatus: "published",
-  },
-];
-
 function EventsManager() {
-  const [events, setEvents] = useState(initialEvents);
+  const [events, setEvents] = useState([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const loadEvents = async () => {
+    try {
+      setLoading(true);
+
+      const snapshot = await getDocs(collection(db, "events"));
+
+      const loadedEvents = snapshot.docs.map((item) => {
+        const data = item.data();
+
+        let eventDate = "";
+
+        if (typeof data.date === "string") {
+          eventDate = data.date;
+        } else if (data.date?.toDate) {
+          const date = data.date.toDate();
+
+          eventDate = [
+            date.getFullYear(),
+            String(date.getMonth() + 1).padStart(2, "0"),
+            String(date.getDate()).padStart(2, "0"),
+          ].join("-");
+        }
+
+        const imageUrl =
+          data.imageUrl || data.image || data.coverImage || "";
+
+        return {
+          id: item.id,
+          title: data.title || "",
+          type: data.type || data.eventType || "Corporate Event",
+          date: eventDate,
+          location: data.location || "",
+          status: data.status || "upcoming",
+          publishStatus:
+            data.publishStatus ||
+            (data.status === "published" ? "published" : "draft"),
+          description: data.description || "",
+          slug: data.slug || "",
+          imageUrl,
+          imageUrls: Array.isArray(data.imageUrls)
+            ? [...new Set([
+                ...(imageUrl ? [imageUrl] : []),
+                ...data.imageUrls,
+              ])]
+            : imageUrl
+              ? [imageUrl]
+              : [],
+        };
+      });
+
+      setEvents(loadedEvents);
+    } catch (error) {
+      console.error("Error loading events:", error);
+      alert("Events load avvaledu. Firebase permissions check cheyyandi.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadEvents();
+  }, []);
 
   const filteredEvents = events.filter((event) => {
+    const term = search.toLowerCase();
+
     const matchesSearch =
-      event.title.toLowerCase().includes(search.toLowerCase()) ||
-      event.type.toLowerCase().includes(search.toLowerCase()) ||
-      event.location.toLowerCase().includes(search.toLowerCase());
+      event.title.toLowerCase().includes(term) ||
+      event.type.toLowerCase().includes(term) ||
+      event.location.toLowerCase().includes(term);
 
     const matchesFilter =
       filter === "all" || event.status === filter;
@@ -82,83 +121,122 @@ function EventsManager() {
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
+  const closeForm = () => {
+    if (saving) return;
+    setShowForm(false);
+    setEditingEvent(null);
+  };
+
+  const handleSave = async (eventData) => {
+    if (saving) return;
+
+    setSaving(true);
+
+    try {
+      const title = eventData.title.trim();
+      const slug =
+        eventData.slug ||
+        title
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "");
+
+      const imageUrl =
+        eventData.imageUrl || eventData.imageUrls?.[0] || "";
+
+      const eventToSave = {
+        title,
+        type: eventData.type,
+        date: eventData.date,
+        location: eventData.location.trim(),
+        status: eventData.status,
+        publishStatus: eventData.publishStatus,
+        description: eventData.description || "",
+        slug,
+        imageUrl,
+        imageUrls: [
+          ...new Set([
+            ...(imageUrl ? [imageUrl] : []),
+            ...(Array.isArray(eventData.imageUrls)
+              ? eventData.imageUrls
+              : []),
+          ]),
+        ],
+        updatedAt: serverTimestamp(),
+      };
+
+      if (editingEvent) {
+        await updateDoc(
+          doc(db, "events", editingEvent.id),
+          eventToSave
+        );
+      } else {
+        await addDoc(collection(db, "events"), {
+          ...eventToSave,
+          createdAt: serverTimestamp(),
+        });
+      }
+
+      await loadEvents();
+      setShowForm(false);
+      setEditingEvent(null);
+      alert("Event saved successfully!");
+    } catch (error) {
+      console.error("Error saving event:", error);
+      alert(
+        `Event save avvaledu: ${error.message}. Firebase rules and permissions check cheyyandi.`
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this event?"
     );
 
     if (!confirmed) return;
 
-    setEvents((current) =>
-      current.filter((event) => event.id !== id)
-    );
-  };
-
-  const handleSave = (eventData) => {
-    if (editingEvent) {
+    try {
+      await deleteDoc(doc(db, "events", id));
       setEvents((current) =>
-        current.map((event) =>
-          event.id === editingEvent.id
-            ? {
-                ...eventData,
-                id: editingEvent.id,
-              }
-            : event
-        )
+        current.filter((event) => event.id !== id)
       );
-    } else {
-      setEvents((current) => [
-        {
-          ...eventData,
-          id: Date.now(),
-        },
-        ...current,
-      ]);
+      alert("Event deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      alert("Event delete avvaledu. Firebase rules check cheyyandi.");
     }
-
-    setShowForm(false);
-    setEditingEvent(null);
   };
 
   return (
     <div className="events-manager">
-
-      {/* HEADER */}
-
       <div className="events-manager__header">
-
         <div>
           <span className="events-manager__label">
             CONTENT MANAGEMENT
           </span>
-
-          <h1>
-            EVENTS
-          </h1>
-
+          <h1>EVENTS</h1>
           <p>
-            Add, edit and manage all events displayed
-            on your website.
+            Add, edit and manage all events displayed on your website.
           </p>
         </div>
 
         <button
+          type="button"
           className="events-manager__add"
           onClick={handleAdd}
         >
           <Plus size={18} />
           ADD EVENT
         </button>
-
       </div>
 
-      {/* TOOLBAR */}
-
       <div className="events-manager__toolbar">
-
         <div className="events-manager__search">
           <Search size={17} />
-
           <input
             type="text"
             placeholder="Search events..."
@@ -168,194 +246,153 @@ function EventsManager() {
         </div>
 
         <div className="events-manager__filters">
-
-          <button
-            className={filter === "all" ? "active" : ""}
-            onClick={() => setFilter("all")}
-          >
-            All
-          </button>
-
-          <button
-            className={filter === "upcoming" ? "active" : ""}
-            onClick={() => setFilter("upcoming")}
-          >
-            Upcoming
-          </button>
-
-          <button
-            className={filter === "completed" ? "active" : ""}
-            onClick={() => setFilter("completed")}
-          >
-            Completed
-          </button>
-
+          {["all", "upcoming", "completed"].map((item) => (
+            <button
+              type="button"
+              key={item}
+              className={filter === item ? "active" : ""}
+              onClick={() => setFilter(item)}
+            >
+              {item === "all"
+                ? "All"
+                : item.charAt(0).toUpperCase() + item.slice(1)}
+            </button>
+          ))}
         </div>
-
       </div>
 
-      {/* EVENTS */}
-
       <div className="events-manager__list">
-
-        {filteredEvents.length === 0 ? (
+        {loading ? (
+          <div className="events-manager__empty">
+            <p>Loading events...</p>
+          </div>
+        ) : filteredEvents.length === 0 ? (
           <div className="events-manager__empty">
             <CalendarDays size={35} />
             <h3>No events found</h3>
-            <p>
-              Try changing your search or filter.
-            </p>
+            <p>Try changing your search or add a new event.</p>
           </div>
         ) : (
-          filteredEvents.map((event) => (
-            <div
-              className="admin-event-row"
-              key={event.id}
-            >
+          filteredEvents.map((event) => {
+            const eventDate = event.date
+              ? new Date(`${event.date}T12:00:00`)
+              : null;
 
-              {/* DATE */}
-
-              <div className="admin-event-row__date">
-                <strong>
-                  {new Date(event.date).getDate()}
-                </strong>
-
-                <span>
-                  {new Date(event.date)
-                    .toLocaleString("en-US", {
-                      month: "short",
-                    })
-                    .toUpperCase()}
-                </span>
-              </div>
-
-              {/* INFO */}
-
-              <div className="admin-event-row__info">
-
-                <div className="admin-event-row__title">
-                  <h3>{event.title}</h3>
-
+            return (
+              <div className="admin-event-row" key={event.id}>
+                <div className="admin-event-row__date">
+                  <strong>
+                    {eventDate && !Number.isNaN(eventDate.getTime())
+                      ? eventDate.getDate()
+                      : "--"}
+                  </strong>
                   <span>
-                    {event.type}
+                    {eventDate && !Number.isNaN(eventDate.getTime())
+                      ? eventDate
+                          .toLocaleString("en-US", { month: "short" })
+                          .toUpperCase()
+                      : "---"}
                   </span>
                 </div>
 
-                <div className="admin-event-row__meta">
+                <div className="admin-event-row__info">
+                  <div className="admin-event-row__title">
+                    <h3>{event.title}</h3>
+                    <span>{event.type}</span>
+                  </div>
 
-                  <span>
-                    <MapPin size={14} />
-                    {event.location}
-                  </span>
-
-                  <span
-                    className={`admin-event-status ${
-                      event.status
-                    }`}
-                  >
-                    {event.status}
-                  </span>
-
-                  <span
-                    className={`admin-event-publish ${
-                      event.publishStatus
-                    }`}
-                  >
-                    {event.publishStatus}
-                  </span>
-
+                  <div className="admin-event-row__meta">
+                    <span>
+                      <MapPin size={14} />
+                      {event.location}
+                    </span>
+                    <span className={`admin-event-status ${event.status}`}>
+                      {event.status}
+                    </span>
+                    <span
+                      className={`admin-event-publish ${event.publishStatus}`}
+                    >
+                      {event.publishStatus}
+                    </span>
+                    <span>
+                      <ImagePlus size={14} />
+                      {event.imageUrls.length} images
+                    </span>
+                  </div>
                 </div>
 
+                <div className="admin-event-row__actions">
+                  <button
+                    type="button"
+                    title="Preview"
+                    onClick={() =>
+                      window.open(
+                        `/events/${event.slug || event.id}`,
+                        "_blank",
+                        "noopener,noreferrer"
+                      )
+                    }
+                  >
+                    <Eye size={17} />
+                  </button>
+
+                  <button
+                    type="button"
+                    title="Edit"
+                    onClick={() => handleEdit(event)}
+                  >
+                    <Edit3 size={17} />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="delete"
+                    title="Delete"
+                    onClick={() => handleDelete(event.id)}
+                  >
+                    <Trash2 size={17} />
+                  </button>
+                </div>
               </div>
-
-              {/* ACTIONS */}
-
-              <div className="admin-event-row__actions">
-
-                <button
-                  title="Preview"
-                  onClick={() =>
-                    alert(
-                      `Preview: ${event.title}`
-                    )
-                  }
-                >
-                  <Eye size={17} />
-                </button>
-
-                <button
-                  title="Edit"
-                  onClick={() =>
-                    handleEdit(event)
-                  }
-                >
-                  <Edit3 size={17} />
-                </button>
-
-                <button
-                  className="delete"
-                  title="Delete"
-                  onClick={() =>
-                    handleDelete(event.id)
-                  }
-                >
-                  <Trash2 size={17} />
-                </button>
-
-              </div>
-
-            </div>
-          ))
+            );
+          })
         )}
-
       </div>
-
-      {/* FORM MODAL */}
 
       {showForm && (
         <div className="event-form-overlay">
-
           <div className="event-form-modal">
-
             <div className="event-form-modal__header">
-
               <div>
-                <span>
-                  EVENT MANAGEMENT
-                </span>
-
-                <h2>
-                  {editingEvent
-                    ? "EDIT EVENT"
-                    : "ADD NEW EVENT"}
-                </h2>
+                <span>EVENT MANAGEMENT</span>
+                <h2>{editingEvent ? "EDIT EVENT" : "ADD NEW EVENT"}</h2>
               </div>
 
               <button
-                onClick={() => {
-                  setShowForm(false);
-                  setEditingEvent(null);
-                }}
+                type="button"
+                onClick={closeForm}
+                disabled={saving}
+                aria-label="Close event form"
               >
                 <X size={20} />
               </button>
-
             </div>
 
             <EventForm
+              key={editingEvent?.id || "new-event"}
               event={editingEvent}
               onSave={handleSave}
-              onCancel={() => {
-                setShowForm(false);
-                setEditingEvent(null);
-              }}
+              onCancel={closeForm}
             />
 
+            {saving && (
+              <p style={{ textAlign: "center", padding: "12px" }}>
+                Saving event...
+              </p>
+            )}
           </div>
-
         </div>
       )}
-
     </div>
   );
 }

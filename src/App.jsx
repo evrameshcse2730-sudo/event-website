@@ -2,10 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Layout from "./components/Layout";
 
-// ==========================================
-// PUBLIC PAGES
-// ==========================================
-
+// Public pages
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Events from "./pages/Events";
@@ -16,10 +13,7 @@ import Gallery from "./pages/Gallery";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 
-// ==========================================
-// ADMIN
-// ==========================================
-
+// Admin
 import AdminLogin from "./admin/AdminLogin";
 import ProtectedRoute from "./admin/ProtectedRoute";
 import AdminLayout from "./admin/AdminLayout";
@@ -30,140 +24,87 @@ import EventTypesManager from "./admin/EventTypesManager";
 import GalleryManager from "./admin/GalleryManager";
 import TestimonialsManager from "./admin/TestimonialsManager";
 import Enquiries from "./admin/Enquiries";
+import ContentManager from "./admin/ContentManager";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-
-        {/* ==========================================
-            PUBLIC WEBSITE
-        ========================================== */}
-
+        {/* Public website */}
         <Route element={<Layout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
 
-          {/* HOME */}
-          <Route
-            path="/"
-            element={<Home />}
-          />
+          {/* Events listing */}
+          <Route path="/events" element={<Events />} />
 
-          {/* ABOUT */}
-          <Route
-            path="/about"
-            element={<About />}
-          />
-
-          {/* EVENTS */}
-          <Route
-            path="/events"
-            element={<Events />}
-          />
-
-          {/* EVENT TYPES */}
+          {/* Event type listing */}
           <Route
             path="/event-types"
             element={<EventTypesPage />}
           />
 
-          {/* EVENT TYPE DETAILS */}
-          <Route
-            path="/events/:slug"
-            element={<EventTypeDetails />}
-          />
-
-          {/* INDIVIDUAL EVENT */}
+          {/* Individual event details */}
           <Route
             path="/event/:slug"
             element={<EventDetails />}
           />
 
-          {/* GALLERY */}
+          {/* Event type details */}
           <Route
-            path="/gallery"
-            element={<Gallery />}
+            path="/events/:slug"
+            element={<EventTypeDetails />}
           />
 
-          {/* CONTACT */}
-          <Route
-            path="/contact"
-            element={<Contact />}
-          />
-
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/contact" element={<Contact />} />
         </Route>
 
+        {/* 404 page */}
+        <Route path="*" element={<NotFound />} />
 
-        {/* ==========================================
-            PUBLIC 404
-        ========================================== */}
-
-        <Route
-          path="*"
-          element={<NotFound />}
-        />
-
-
-        {/* ==========================================
-            ADMIN LOGIN
-        ========================================== */}
-
+        {/* Admin login */}
         <Route
           path="/admin/login"
           element={<AdminLogin />}
         />
 
-
-        {/* ==========================================
-            PROTECTED ADMIN PANEL
-        ========================================== */}
-
+        {/* Protected admin panel */}
         <Route element={<ProtectedRoute />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Dashboard />} />
 
-          <Route
-            path="/admin"
-            element={<AdminLayout />}
-          >
-
-            {/* DASHBOARD */}
-            <Route
-              index
-              element={<Dashboard />}
-            />
-
-            {/* EVENTS */}
             <Route
               path="events"
               element={<EventsManager />}
             />
 
-            {/* EVENT TYPES */}
             <Route
               path="event-types"
               element={<EventTypesManager />}
             />
 
-            {/* GALLERY */}
             <Route
               path="gallery"
               element={<GalleryManager />}
             />
 
-            {/* TESTIMONIALS */}
             <Route
               path="testimonials"
               element={<TestimonialsManager />}
             />
 
-            {/* ENQUIRIES */}
+            <Route
+              path="content"
+              element={<ContentManager />}
+            />
+
             <Route
               path="enquiries"
               element={<Enquiries />}
             />
-
           </Route>
-
         </Route>
-
       </Routes>
     </BrowserRouter>
   );

@@ -1,15 +1,46 @@
-import { useState } from "react";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+
 import emailjs from "@emailjs/browser";
+
 import { CheckCircle, Send } from "lucide-react";
+
 import { db } from "../firebase/config";
+
 import "./Contact.css";
+
 
 const SERVICE_ID = "service_71lptkr";
 const TEMPLATE_ID = "template_fnnb11l";
 const PUBLIC_KEY = "zkl8juKKKBeXdmvze";
 
+
 function Contact() {
+
+  // ==========================================
+  // WEBSITE CONTENT
+  // ==========================================
+
+  const [content, setContent] = useState({
+    title: "LET'S MAKE IT HAPPEN.",
+    description:
+      "Tell us about your event and let us create an experience worth remembering.",
+    phone: "+91 99999 99999",
+    email: "hello@eventstudio.com",
+    address: "Hyderabad, Telangana, India",
+  });
+
+
+  // ==========================================
+  // FORM DATA
+  // ==========================================
+
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -19,11 +50,68 @@ function Contact() {
     message: "",
   });
 
+
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
+
+  // ==========================================
+  // LOAD CONTACT CONTENT
+  // ==========================================
+
+  useEffect(() => {
+
+    const loadContactContent = async () => {
+
+      try {
+
+        const contentRef = doc(
+          db,
+          "content",
+          "website"
+        );
+
+        const snapshot = await getDoc(contentRef);
+
+        if (snapshot.exists()) {
+
+          const data = snapshot.data();
+
+          if (data.contact) {
+
+            setContent((previous) => ({
+              ...previous,
+              ...data.contact,
+            }));
+
+          }
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Error loading contact content:",
+          error
+        );
+
+      }
+
+    };
+
+
+    loadContactContent();
+
+  }, []);
+
+
+  // ==========================================
+  // FORM CHANGE
+  // ==========================================
+
   const handleChange = (e) => {
+
     const { name, value } = e.target;
 
     setFormData((current) => ({
@@ -33,90 +121,180 @@ function Contact() {
 
     setSuccess(false);
     setError("");
+
   };
 
+
+  // ==========================================
+  // SUBMIT
+  // ==========================================
+
   const handleSubmit = async (e) => {
+
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
 
+
     console.log("CONTACT BUTTON CLICKED");
 
+
     if (submitting) return;
+
 
     setSuccess(false);
     setError("");
 
-    // Validation
+
+    // ==========================================
+    // VALIDATION
+    // ==========================================
+
     if (!formData.name.trim()) {
-      setError("Please enter your name.");
+
+      setError(
+        "Please enter your name."
+      );
+
       return;
+
     }
+
 
     if (!formData.phone.trim()) {
-      setError("Please enter your phone number.");
+
+      setError(
+        "Please enter your phone number."
+      );
+
       return;
+
     }
+
 
     if (!formData.email.trim()) {
-      setError("Please enter your email address.");
+
+      setError(
+        "Please enter your email address."
+      );
+
       return;
+
     }
+
 
     if (!formData.eventType) {
-      setError("Please select an event type.");
+
+      setError(
+        "Please select an event type."
+      );
+
       return;
+
     }
 
+
     if (!formData.message.trim()) {
-      setError("Please enter your event details.");
+
+      setError(
+        "Please enter your event details."
+      );
+
       return;
+
     }
+
 
     setSubmitting(true);
 
+
     const data = {
+
       name: formData.name.trim(),
+
       phone: formData.phone.trim(),
+
       email: formData.email.trim(),
+
       eventType: formData.eventType,
-      eventDate: formData.eventDate || "Not specified",
-      message: formData.message.trim(),
+
+      eventDate:
+        formData.eventDate ||
+        "Not specified",
+
+      message:
+        formData.message.trim(),
+
     };
+
 
     let firebaseOK = false;
     let emailOK = false;
+
 
     // ==========================================
     // 1. SAVE ENQUIRY TO FIREBASE
     // ==========================================
 
     try {
-      await addDoc(collection(db, "enquiries"), {
-        ...data,
-        status: "new",
-        createdAt: serverTimestamp(),
-      });
+
+      await addDoc(
+        collection(db, "enquiries"),
+        {
+          ...data,
+          status: "new",
+          createdAt: serverTimestamp(),
+        }
+      );
+
 
       firebaseOK = true;
 
-      console.log("FIREBASE SUCCESS");
-      console.log("ENQUIRY SAVED:", data);
+      console.log(
+        "FIREBASE SUCCESS"
+      );
+
+      console.log(
+        "ENQUIRY SAVED:",
+        data
+      );
+
     } catch (firebaseError) {
-      console.error("FIREBASE ERROR:", firebaseError);
+
+      console.error(
+        "FIREBASE ERROR:",
+        firebaseError
+      );
+
     }
 
+
     // ==========================================
-    // 2. SEND EMAIL USING EMAILJS
+    // 2. EMAILJS
     // ==========================================
 
     try {
-      console.log("EMAILJS STARTING...");
 
-      console.log("SERVICE ID:", SERVICE_ID);
-      console.log("TEMPLATE ID:", TEMPLATE_ID);
-      console.log("PUBLIC KEY:", PUBLIC_KEY);
+      console.log(
+        "EMAILJS STARTING..."
+      );
+
+      console.log(
+        "SERVICE ID:",
+        SERVICE_ID
+      );
+
+      console.log(
+        "TEMPLATE ID:",
+        TEMPLATE_ID
+      );
+
+      console.log(
+        "PUBLIC KEY:",
+        PUBLIC_KEY
+      );
+
 
       const result = await emailjs.send(
         SERVICE_ID,
@@ -127,34 +305,71 @@ function Contact() {
         }
       );
 
+
       emailOK = true;
 
-      console.log("EMAILJS SUCCESS:", result);
+      console.log(
+        "EMAILJS SUCCESS:",
+        result
+      );
+
     } catch (emailError) {
-      console.error("EMAILJS STATUS:", emailError?.status);
-      console.error("EMAILJS TEXT:", emailError?.text);
-      console.error("EMAILJS FULL ERROR:", emailError);
+
+      console.error(
+        "EMAILJS STATUS:",
+        emailError?.status
+      );
+
+      console.error(
+        "EMAILJS TEXT:",
+        emailError?.text
+      );
+
+      console.error(
+        "EMAILJS FULL ERROR:",
+        emailError
+      );
+
     }
+
 
     // ==========================================
     // 3. FINAL RESULT
     // ==========================================
 
     if (firebaseOK && emailOK) {
+
       setSuccess(true);
+
       setError("");
 
+
       setFormData({
+
         name: "",
+
         phone: "",
+
         email: "",
+
         eventType: "",
+
         eventDate: "",
+
         message: "",
+
       });
 
-      console.log("CONTACT FORM COMPLETED SUCCESSFULLY");
-    } else if (firebaseOK && !emailOK) {
+
+      console.log(
+        "CONTACT FORM COMPLETED SUCCESSFULLY"
+      );
+
+    } else if (
+      firebaseOK &&
+      !emailOK
+    ) {
+
       setSuccess(false);
 
       setError(
@@ -164,7 +379,12 @@ function Contact() {
       console.log(
         "Firebase succeeded, but EmailJS failed."
       );
-    } else if (!firebaseOK && emailOK) {
+
+    } else if (
+      !firebaseOK &&
+      emailOK
+    ) {
+
       setSuccess(false);
 
       setError(
@@ -174,7 +394,9 @@ function Contact() {
       console.log(
         "EmailJS succeeded, but Firebase failed."
       );
+
     } else {
+
       setSuccess(false);
 
       setError(
@@ -184,47 +406,67 @@ function Contact() {
       console.log(
         "Both Firebase and EmailJS failed."
       );
+
     }
 
+
     setSubmitting(false);
+
   };
 
+
+  // ==========================================
+  // RENDER
+  // ==========================================
+
   return (
-    <main className="contact-page">
+
+    <main
+      className="contact-page"
+      id="contact"
+    >
 
       {/* ==========================================
           CONTACT HERO
       ========================================== */}
 
       <section className="contact-hero section">
+
         <div className="container">
 
           <span className="section-label">
             LET'S CREATE
           </span>
 
+
           <h1 className="section-title">
-            LET'S MAKE
-            <br />
-            IT HAPPEN.
+
+            {content.title}
+
           </h1>
 
+
           <p className="contact-intro">
-            Tell us about your event and let us create
-            an experience worth remembering.
+
+            {content.description}
+
           </p>
 
         </div>
+
       </section>
+
 
       {/* ==========================================
           CONTACT CONTENT
       ========================================== */}
 
       <section className="contact-content section">
+
         <div className="container">
 
           <div className="contact-layout">
+
 
             {/* ======================================
                 CONTACT INFORMATION
@@ -236,47 +478,87 @@ function Contact() {
                 GET IN TOUCH
               </span>
 
+
               <h2>
+
                 Have an event
+
                 <br />
-                <span>in mind?</span>
+
+                <span>
+                  in mind?
+                </span>
+
               </h2>
 
+
               <p>
-                Whether it is a corporate event, wedding,
-                conference, launch or celebration, tell us
-                what you have in mind.
+                Whether it is a corporate event,
+                wedding, conference, launch or
+                celebration, tell us what you
+                have in mind.
               </p>
+
 
               <div className="contact-details">
 
-                <div>
-                  <span>PHONE</span>
 
-                  <a href="tel:+919999999999">
-                    +91 99999 99999
+                {/* PHONE */}
+
+                <div>
+
+                  <span>
+                    PHONE
+                  </span>
+
+                  <a
+                    href={`tel:${content.phone.replace(
+                      /\s+/g,
+                      ""
+                    )}`}
+                  >
+                    {content.phone}
                   </a>
+
                 </div>
 
-                <div>
-                  <span>EMAIL</span>
 
-                  <a href="mailto:hello@eventstudio.com">
-                    hello@eventstudio.com
+                {/* EMAIL */}
+
+                <div>
+
+                  <span>
+                    EMAIL
+                  </span>
+
+                  <a
+                    href={`mailto:${content.email}`}
+                  >
+                    {content.email}
                   </a>
+
                 </div>
 
+
+                {/* LOCATION */}
+
                 <div>
-                  <span>LOCATION</span>
+
+                  <span>
+                    LOCATION
+                  </span>
 
                   <p>
-                    Hyderabad, Telangana, India
+                    {content.address}
                   </p>
+
                 </div>
+
 
               </div>
 
             </div>
+
 
             {/* ======================================
                 CONTACT FORM
@@ -284,38 +566,53 @@ function Contact() {
 
             <div className="contact-form-wrapper">
 
-              {/* SUCCESS MESSAGE */}
+
+              {/* SUCCESS */}
 
               {success && (
+
                 <div className="contact-success">
 
                   <CheckCircle size={22} />
 
                   <div>
+
                     <strong>
                       Enquiry sent successfully.
                     </strong>
 
                     <p>
-                      Our team will get back to you soon.
+                      Our team will get back to
+                      you soon.
                     </p>
+
                   </div>
 
                 </div>
+
               )}
 
-              {/* ERROR MESSAGE */}
+
+              {/* ERROR */}
 
               {error && (
+
                 <div className="contact-error">
+
                   {error}
+
                 </div>
+
               )}
+
 
               <form
                 className="contact-form"
-                onSubmit={(e) => e.preventDefault()}
+                onSubmit={(e) =>
+                  e.preventDefault()
+                }
               >
+
 
                 {/* NAME */}
 
@@ -337,6 +634,7 @@ function Contact() {
 
                 </div>
 
+
                 {/* PHONE */}
 
                 <div className="form-group">
@@ -357,6 +655,7 @@ function Contact() {
 
                 </div>
 
+
                 {/* EMAIL */}
 
                 <div className="form-group">
@@ -376,6 +675,7 @@ function Contact() {
                   />
 
                 </div>
+
 
                 {/* EVENT TYPE */}
 
@@ -424,6 +724,7 @@ function Contact() {
 
                 </div>
 
+
                 {/* EVENT DATE */}
 
                 <div className="form-group">
@@ -441,6 +742,7 @@ function Contact() {
                   />
 
                 </div>
+
 
                 {/* MESSAGE */}
 
@@ -461,6 +763,7 @@ function Contact() {
 
                 </div>
 
+
                 {/* SUBMIT */}
 
                 <button
@@ -471,10 +774,13 @@ function Contact() {
                 >
 
                   {submitting ? (
+
                     <span>
                       Sending...
                     </span>
+
                   ) : (
+
                     <>
                       <span>
                         Send Enquiry
@@ -482,9 +788,11 @@ function Contact() {
 
                       <Send size={18} />
                     </>
+
                   )}
 
                 </button>
+
 
               </form>
 
@@ -493,10 +801,13 @@ function Contact() {
           </div>
 
         </div>
+
       </section>
 
     </main>
+
   );
+
 }
 
 export default Contact;

@@ -1,10 +1,13 @@
+
+/* =========================================
+   UPCOMING EVENTS — PREMIUM RESPONSIVE DESIGN
+========================================= */
+
 .upcoming-events {
   position: relative;
   overflow: hidden;
-
   background: var(--ivory);
   color: var(--text-dark);
-
   padding: 140px 0;
 }
 
@@ -17,12 +20,9 @@
 
 .upcoming-header {
   display: grid;
-  grid-template-columns: 1fr 0.7fr;
-
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.7fr);
   gap: 80px;
-
   align-items: end;
-
   margin-bottom: 85px;
 }
 
@@ -30,11 +30,8 @@
   display: flex;
   align-items: center;
   gap: 13px;
-
   margin-bottom: 35px;
-
   color: var(--emerald);
-
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.2em;
@@ -45,21 +42,21 @@
 }
 
 .upcoming-label i {
+  display: inline-block;
+  flex-shrink: 0;
   width: 45px;
   height: 1px;
-
   background: var(--gold);
 }
 
 .upcoming-header h2 {
+  margin: 0;
   font-family: "Manrope", sans-serif;
-
   font-size: clamp(52px, 7vw, 105px);
   line-height: 0.87;
-
   font-weight: 800;
-
   letter-spacing: -0.065em;
+  color: var(--text-dark);
 }
 
 .upcoming-header h2 span {
@@ -68,9 +65,8 @@
 
 .upcoming-header > p {
   max-width: 400px;
-
+  margin: 0;
   color: #65726f;
-
   font-size: 14px;
   line-height: 1.8;
 }
@@ -78,32 +74,32 @@
 /* EVENT LIST */
 
 .upcoming-list {
+  width: 100%;
   border-top: 1px solid rgba(15, 92, 77, 0.2);
 }
 
 .upcoming-card {
   position: relative;
-
   display: grid;
-  grid-template-columns: 130px 1fr 60px;
-
-  gap: 45px;
-
+  grid-template-columns:
+    90px
+    minmax(0, 1fr)
+    minmax(230px, 0.9fr)
+    52px;
+  gap: 30px;
   align-items: center;
-
-  padding: 42px 0;
-
+  width: 100%;
+  min-width: 0;
+  padding: 38px 0;
   border-bottom: 1px solid rgba(15, 92, 77, 0.2);
-
   transition:
     padding 0.4s ease,
     background 0.4s ease;
 }
 
 .upcoming-card:hover {
-  padding-left: 18px;
-  padding-right: 18px;
-
+  padding-left: 14px;
+  padding-right: 14px;
   background: rgba(15, 92, 77, 0.035);
 }
 
@@ -112,132 +108,181 @@
 .event-date {
   display: flex;
   flex-direction: column;
-
+  align-items: flex-start;
+  min-width: 0;
   color: var(--emerald);
 }
 
 .event-date-number {
   font-family: "Manrope", sans-serif;
-
-  font-size: 58px;
+  font-size: clamp(38px, 4vw, 58px);
   line-height: 0.9;
   font-weight: 800;
-
   letter-spacing: -0.06em;
 }
 
 .event-date-month {
-  margin-top: 7px;
-
+  margin-top: 9px;
   color: var(--gold);
-
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.2em;
 }
 
 .event-date-year {
-  margin-top: 5px;
-
+  margin-top: 6px;
   color: #78837f;
-
-  font-size: 9px;
-  letter-spacing: 0.15em;
+  font-size: 10px;
+  letter-spacing: 0.12em;
 }
 
-/* CONTENT */
+/* EVENT IMAGE */
+
+.upcoming-visual {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  min-width: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(
+      circle at 70% 30%,
+      rgba(47, 168, 154, 0.4),
+      transparent 35%
+    ),
+    linear-gradient(135deg, #0b4037, #06221e);
+}
+
+.upcoming-visual::after {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  z-index: 1;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+}
+
+.upcoming-visual img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.7s ease;
+}
+
+.upcoming-card:hover .upcoming-visual img {
+  transform: scale(1.06);
+}
+
+/* EVENT CONTENT */
+
+.upcoming-content {
+  min-width: 0;
+  align-self: center;
+}
 
 .upcoming-type {
+  display: inline-block;
   color: var(--gold);
-
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.2em;
-
+  letter-spacing: 0.16em;
+  line-height: 1.6;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
 .upcoming-content h3 {
-  margin-top: 10px;
-
+  margin: 12px 0 0;
   font-family: "Manrope", sans-serif;
-
   color: var(--text-dark);
-
-  font-size: clamp(27px, 3vw, 43px);
-  line-height: 1;
-
+  font-size: clamp(25px, 2.5vw, 38px);
+  line-height: 1.08;
+  font-weight: 800;
   letter-spacing: -0.045em;
+  overflow-wrap: anywhere;
 }
 
 .upcoming-content > p {
-  max-width: 650px;
-
-  margin-top: 13px;
-
+  max-width: 560px;
+  margin: 14px 0 0;
   color: #687570;
-
   font-size: 13px;
-  line-height: 1.7;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
 }
 
-/* META */
+/* EVENT METADATA */
 
 .event-meta {
   display: flex;
-  align-items: center;
-  gap: 24px;
-
-  margin-top: 19px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px 20px;
+  margin-top: 20px;
 }
 
 .event-meta span {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 7px;
-
+  min-width: 0;
   color: #65726f;
-
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .event-meta svg {
+  flex-shrink: 0;
+  margin-top: 1px;
   color: var(--emerald);
 }
 
-/* ACTION */
+/* EVENT ACTION */
 
 .upcoming-action {
-  width: 52px;
-  height: 52px;
-
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
   display: grid;
   place-items: center;
-
   border: 1px solid rgba(15, 92, 77, 0.3);
-
   color: var(--emerald);
-
+  text-decoration: none;
   transition:
     background 0.35s ease,
     color 0.35s ease,
     transform 0.35s ease;
 }
 
-.upcoming-card:hover .upcoming-action {
+.upcoming-action:hover {
   background: var(--emerald);
   color: var(--ivory);
+}
 
+.upcoming-card:hover .upcoming-action {
   transform: rotate(45deg);
 }
 
-/* BOTTOM */
+/* LOADING / EMPTY / ERROR */
+
+.upcoming-message {
+  margin: 0;
+  padding: 32px 0;
+  color: var(--text-dark);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* VIEW ALL EVENTS */
 
 .upcoming-bottom {
   display: flex;
   justify-content: flex-end;
-
   margin-top: 38px;
 }
 
@@ -245,21 +290,22 @@
   display: inline-flex;
   align-items: center;
   gap: 9px;
-
   color: var(--emerald);
-
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-
+  text-decoration: none;
   border-bottom: 1px solid rgba(15, 92, 77, 0.3);
-
-  padding-bottom: 8px;
-
+  padding-bottom: 9px;
   transition:
     gap 0.3s ease,
     color 0.3s ease;
+}
+
+.upcoming-bottom a svg {
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
 }
 
 .upcoming-bottom a:hover {
@@ -267,32 +313,54 @@
   color: var(--gold);
 }
 
+.upcoming-bottom a:hover svg {
+  transform: translate(2px, -2px);
+}
+
 /* TABLET */
 
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
   .upcoming-events {
-    padding: 100px 0;
+    padding: 105px 0;
   }
 
   .upcoming-header {
-    grid-template-columns: 1fr;
-    gap: 30px;
-
-    margin-bottom: 60px;
-  }
-
-  .upcoming-header > p {
-    max-width: 600px;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.8fr);
+    gap: 40px;
+    margin-bottom: 65px;
   }
 
   .upcoming-card {
-    grid-template-columns: 100px 1fr 52px;
-
-    gap: 30px;
+    grid-template-columns: 75px minmax(0, 1fr) 52px;
+    gap: 22px;
+    padding: 30px 0;
   }
 
-  .event-date-number {
-    font-size: 48px;
+  .upcoming-visual {
+    grid-column: 2;
+    grid-row: 2;
+    height: 220px;
+  }
+
+  .upcoming-content {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .event-date {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+  }
+
+  .upcoming-action {
+    grid-column: 3;
+    grid-row: 1;
+    align-self: start;
+  }
+
+  .upcoming-content h3 {
+    font-size: clamp(25px, 3.5vw, 36px);
   }
 }
 
@@ -300,62 +368,106 @@
 
 @media (max-width: 600px) {
   .upcoming-container {
-    width: min(100% - 28px, var(--container));
+    width: calc(100% - 32px);
   }
 
   .upcoming-events {
-    padding: 80px 0;
+    padding: 78px 0;
+  }
+
+  .upcoming-header {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 25px;
+    margin-bottom: 45px;
   }
 
   .upcoming-label {
-    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 27px;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+  }
+
+  .upcoming-label i {
+    width: 28px;
   }
 
   .upcoming-header h2 {
-    font-size: clamp(48px, 14vw, 70px);
+    font-size: clamp(46px, 13vw, 70px);
+    line-height: 0.92;
   }
 
   .upcoming-header > p {
+    max-width: 100%;
     font-size: 13px;
   }
 
   .upcoming-card {
-    grid-template-columns: 68px 1fr;
-
-    gap: 20px;
-
-    padding: 30px 0;
+    grid-template-columns: 55px minmax(0, 1fr);
+    gap: 15px;
+    padding: 25px 0;
   }
 
   .upcoming-card:hover {
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .event-date {
+    grid-column: 1;
+    grid-row: 1;
   }
 
   .event-date-number {
-    font-size: 39px;
+    font-size: 36px;
   }
 
   .event-date-month {
+    margin-top: 7px;
     font-size: 9px;
+    letter-spacing: 0.12em;
   }
 
   .event-date-year {
-    font-size: 8px;
+    font-size: 9px;
+  }
+
+  .upcoming-content {
+    grid-column: 2;
+    grid-row: 1;
   }
 
   .upcoming-content h3 {
-    font-size: 27px;
+    margin-top: 8px;
+    font-size: clamp(22px, 6vw, 29px);
+    line-height: 1.12;
   }
 
   .upcoming-content > p {
+    margin-top: 10px;
     font-size: 12px;
+  }
+
+  .upcoming-type {
+    font-size: 9px;
+    letter-spacing: 0.12em;
   }
 
   .event-meta {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+    gap: 9px;
+    margin-top: 15px;
+  }
+
+  .event-meta span {
+    font-size: 10px;
+  }
+
+  .upcoming-visual {
+    grid-column: 2;
+    grid-row: 2;
+    height: 190px;
   }
 
   .upcoming-action {
@@ -364,5 +476,47 @@
 
   .upcoming-bottom {
     justify-content: flex-start;
+    margin-top: 28px;
+  }
+
+  .upcoming-bottom a {
+    font-size: 10px;
+  }
+}
+
+/* SMALL MOBILE */
+
+@media (max-width: 380px) {
+  .upcoming-container {
+    width: calc(100% - 26px);
+  }
+
+  .upcoming-card {
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .event-date-number {
+    font-size: 31px;
+  }
+
+  .upcoming-content h3 {
+    font-size: 22px;
+  }
+
+  .upcoming-visual {
+    height: 165px;
+  }
+}
+
+/* REDUCED MOTION ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+  .upcoming-card,
+  .upcoming-visual img,
+  .upcoming-action,
+  .upcoming-bottom a,
+  .upcoming-bottom a svg {
+    transition: none;
   }
 }
