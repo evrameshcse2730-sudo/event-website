@@ -1,5 +1,5 @@
-
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowUpRight,
@@ -24,7 +24,9 @@ function formatEventDate(value) {
   if (typeof value?.toDate === "function") {
     date = value.toDate();
   } else if (typeof value === "string") {
-    date = new Date(value + "T12:00:00");
+    date = /^\d{4}-\d{2}-\d{2}$/.test(value)
+      ? new Date(`${value}T12:00:00`)
+      : new Date(value);
   } else if (value instanceof Date) {
     date = value;
   } else {
@@ -93,20 +95,29 @@ function UpcomingEvents() {
           })
           .filter(
             (event) =>
-              event.formattedDate && event.timestamp >= today.getTime()
+              event.formattedDate &&
+              event.timestamp >= today.getTime()
           )
           .sort((a, b) => a.timestamp - b.timestamp)
           .slice(0, 3);
 
-        if (isMounted) setUpcomingEvents(events);
+        if (isMounted) {
+          setUpcomingEvents(events);
+        }
       } catch (err) {
-        console.error("Upcoming events error:", err.code, err.message);
+        console.error(
+          "Upcoming events error:",
+          err.code,
+          err.message
+        );
 
         if (isMounted) {
           setError("Unable to load events. Please try again later.");
         }
       } finally {
-        if (isMounted) setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
 
@@ -150,7 +161,9 @@ function UpcomingEvents() {
 
         <div className="upcoming-list">
           {loading ? (
-            <p className="upcoming-message">Loading upcoming events...</p>
+            <p className="upcoming-message">
+              Loading upcoming events...
+            </p>
           ) : error ? (
             <p className="upcoming-message">{error}</p>
           ) : upcomingEvents.length === 0 ? (
@@ -165,15 +178,20 @@ function UpcomingEvents() {
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+                transition={{
+                  duration: 0.6,
+                  delay: index * 0.1,
+                }}
               >
                 <div className="event-date">
                   <span className="event-date-number">
                     {event.formattedDate.date}
                   </span>
+
                   <span className="event-date-month">
                     {event.formattedDate.month}
                   </span>
+
                   <span className="event-date-year">
                     {event.formattedDate.year}
                   </span>
@@ -181,15 +199,24 @@ function UpcomingEvents() {
 
                 {event.imageUrl && (
                   <div className="upcoming-visual">
-                    <img src={event.imageUrl} alt={event.title} loading="lazy" />
+                    <img
+                      src={event.imageUrl}
+                      alt={event.title}
+                      loading="lazy"
+                    />
                   </div>
                 )}
 
                 <div className="upcoming-content">
-                  <span className="upcoming-type">{event.type}</span>
+                  <span className="upcoming-type">
+                    {event.type}
+                  </span>
+
                   <h3>{event.title}</h3>
 
-                  {event.description && <p>{event.description}</p>}
+                  {event.description && (
+                    <p>{event.description}</p>
+                  )}
 
                   <div className="event-meta">
                     <span>
@@ -198,6 +225,7 @@ function UpcomingEvents() {
                       {event.formattedDate.month}{" "}
                       {event.formattedDate.year}
                     </span>
+
                     <span>
                       <MapPin size={14} />
                       {event.location}
@@ -205,13 +233,13 @@ function UpcomingEvents() {
                   </div>
                 </div>
 
-                <a
-                  href={`/events/${event.slug}`}
+                <Link
+                  to={`/event/${event.slug}`}
                   className="upcoming-action"
                   aria-label={`View ${event.title}`}
                 >
                   <ArrowUpRight size={21} />
-                </a>
+                </Link>
               </motion.article>
             ))
           )}
@@ -224,10 +252,10 @@ function UpcomingEvents() {
           viewport={{ once: true }}
           transition={{ duration: 0.7, delay: 0.2 }}
         >
-          <a href="/events">
+          <Link to="/events">
             View All Events
             <ArrowUpRight size={17} />
-          </a>
+          </Link>
         </motion.div>
       </div>
     </section>

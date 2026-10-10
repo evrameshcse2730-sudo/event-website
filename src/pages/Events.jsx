@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -124,6 +123,11 @@ function Events() {
         <div className="events-page__hero-grid" />
 
         <div className="container events-page__hero-content">
+          <Link to="/" className="events-page__home-link">
+            <span aria-hidden="true">←</span>
+            BACK TO HOME
+          </Link>
+
           <p className="section-label">OUR EVENT COLLECTION</p>
 
           <h1>

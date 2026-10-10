@@ -19,7 +19,7 @@ function Home() {
       <UpcomingEvents />
       <FeaturedEvent />
       <WhyChooseUs />
-      <PastEvents />
+      {/*<PastEvents />/  MULTIPLE IMAGE GALLERY */}
       <GalleryPreview />
       <Testimonials />
       <CTA />

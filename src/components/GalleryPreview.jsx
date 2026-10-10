@@ -1,240 +1,228 @@
-import { useEffect, useRef, useState } from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { Link } from "react-router-dom";
-import {
-  ArrowLeft,
-  ArrowRight,
-  ArrowUpRight,
-} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
 import { db } from "../firebase/config";
 import "./GalleryPreview.css";
 
 function GalleryPreview() {
-  const [gallery, setGallery] = useState([]);
+  const [galleryItems, setGalleryItems] = useState([]);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const carouselRef = useRef(null);
-
   useEffect(() => {
-    const fetchGallery = async () => {
+    let mounted = true;
+
+    const loadGallery = async () => {
       try {
-        const q = query(
+        const galleryQuery = query(
           collection(db, "gallery"),
-          where("status", "==", "published")
+          orderBy("createdAt", "desc")
         );
 
-        const snapshot = await getDocs(q);
+        const snapshot = await getDocs(galleryQuery);
 
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const items = snapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() }))
+          .filter(
+            (item) => item.status === "published" && item.imageUrl
+          )
+          .slice(0, 10);
 
-        data.sort((a, b) => {
-          const aTime = a.createdAt?.seconds || 0;
-          const bTime = b.createdAt?.seconds || 0;
-
-          return bTime - aTime;
-        });
-
-        setGallery(data);
+        if (mounted) {
+          setGalleryItems(items);
+          setActiveIndex(0);
+        }
       } catch (error) {
-        console.error("Gallery Preview Error:", error);
+        console.error("Error loading completed event gallery:", error);
+        if (mounted) setGalleryItems([]);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
-    fetchGallery();
+    loadGallery();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const scrollCarousel = (direction) => {
-    if (!carouselRef.current) return;
+  const count = galleryItems.length;
 
-    const card = carouselRef.current.querySelector(
-      ".gallery-carousel-item"
+  const visibleCards = useMemo(() => {
+    if (!count) return [];
+
+    return [-2, -1, 0, 1, 2]
+      .map((offset) => {
+        const index = (activeIndex + offset + count) % count;
+
+        return {
+          item: galleryItems[index],
+          index,
+          offset,
+        };
+      })
+      .filter(
+        (card, position, cards) =>
+          cards.findIndex(
+            (candidate) => candidate.index === card.index
+          ) === position
+      );
+  }, [galleryItems, activeIndex, count]);
+
+  const move = (direction) => {
+    if (!count) return;
+
+    setActiveIndex(
+      (current) => (current + direction + count) % count
     );
-
-    if (!card) return;
-
-    const cardWidth = card.offsetWidth + 16;
-
-    carouselRef.current.scrollBy({
-      left:
-        direction === "next"
-          ? cardWidth
-          : -cardWidth,
-      behavior: "smooth",
-    });
   };
 
-  /*
-    Cloudinary optimization.
+  const openGallery = () => {
+    window.location.href = "/gallery";
+  };
 
-    c_fill  = fills the card
-    g_auto  = detects important subject
-    w/h     = optimized dimensions
-    q_auto  = automatic quality
-    f_auto  = automatic image format
-  */
-  const getGalleryImage = (url) => {
-    if (!url) return "";
-
-    if (!url.includes("res.cloudinary.com")) {
-      return url;
-    }
-
-    if (!url.includes("/upload/")) {
-      return url;
-    }
-
-    const parts = url.split("/upload/");
-
-    return `${parts[0]}/upload/c_fill,g_auto,w_1200,h_800,q_auto,f_auto/${parts[1]}`;
+  const offsetClass = (offset) => {
+    if (offset === -2) return "offset-m2";
+    if (offset === -1) return "offset-m1";
+    if (offset === 1) return "offset-p1";
+    if (offset === 2) return "offset-p2";
+    return "offset-center";
   };
 
   return (
-    <section className="gallery-preview section">
-      <div className="container">
-
-        {/* HEADER */}
-
-        <div className="gallery-preview-header">
-
+    <section className="completed-events" id="gallery">
+      <div className="completed-events__container">
+        <header className="completed-events__header">
           <div>
-            <span className="section-label">
+            <span className="completed-events__eyebrow">
               OUR WORK
             </span>
 
-            <h2 className="section-title">
+            <h2>
               MOMENTS
               <br />
-              THAT MATTER.
+              THAT <span>MATTER.</span>
             </h2>
           </div>
 
-          <div className="gallery-preview-actions">
+          <p>
+            A glimpse of the celebrations, connections and experiences
+            we have brought to life.
+          </p>
+        </header>
 
-            <Link
-              to="/gallery"
-              className="gallery-view-all"
-            >
-              <span>View Full Gallery</span>
-              <ArrowUpRight size={17} />
-            </Link>
-
-            {!loading && gallery.length > 1 && (
-              <div className="gallery-carousel-controls">
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    scrollCarousel("prev")
-                  }
-                  aria-label="Previous gallery image"
-                >
-                  <ArrowLeft size={18} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    scrollCarousel("next")
-                  }
-                  aria-label="Next gallery image"
-                >
-                  <ArrowRight size={18} />
-                </button>
-
-              </div>
-            )}
-
-          </div>
-        </div>
-
-        {/* LOADING */}
-
-        {loading && (
-          <div className="gallery-preview-loading">
-            Loading gallery...
-          </div>
-        )}
-
-        {/* EMPTY */}
-
-        {!loading && gallery.length === 0 && (
-          <div className="gallery-preview-empty">
-            <h3>No gallery images yet.</h3>
-
-            <p>
-              Published event moments will appear here.
-            </p>
-          </div>
-        )}
-
-        {/* CAROUSEL */}
-
-        {!loading && gallery.length > 0 && (
-          <div
-            className="gallery-carousel"
-            ref={carouselRef}
-          >
-
-            {gallery.map((item) => (
-              <Link
-                to="/gallery"
-                className="gallery-carousel-item"
-                key={item.id}
+        <div
+          className="completed-events__carousel"
+          aria-label="Completed events carousel"
+        >
+          {loading ? (
+            <div className="completed-events__state">
+              Loading completed events...
+            </div>
+          ) : count === 0 ? (
+            <div className="completed-events__state">
+              No published gallery images yet. Add images from Admin
+              Panel → Gallery.
+            </div>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="completed-events__arrow completed-events__arrow--left"
+                onClick={() => move(-1)}
+                aria-label="Previous event"
               >
+                <ChevronLeft size={24} />
+              </button>
 
-                <div className="gallery-carousel-image">
+              <div className="completed-events__stage">
+                {visibleCards.map(({ item, index, offset }) => (
+                  <button
+                    type="button"
+                    key={item.id}
+                    className={[
+                      "completed-events__card",
+                      `completed-events__card--${offsetClass(offset)}`,
+                      offset === 0 ? "is-active" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    style={{
+                      backgroundImage: `linear-gradient(180deg, rgba(5, 16, 15, .02) 15%, rgba(5, 16, 15, .88) 100%), url("${item.imageUrl}")`,
+                    }}
+                    onClick={() => setActiveIndex(index)}
+                    aria-label={`Show ${
+                      item.title || item.event || "event image"
+                    }`}
+                    aria-current={offset === 0 ? "true" : undefined}
+                  >
+                    <span className="completed-events__card-top">
+                      <span className="completed-events__category">
+                        {item.category || "EVENT"}
+                      </span>
 
-                  {item.imageUrl ? (
-                    <img
-                      src={getGalleryImage(item.imageUrl)}
-                      alt={
-                        item.title ||
-                        "Event gallery image"
-                      }
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="gallery-preview-placeholder">
-                      No Image
-                    </div>
-                  )}
-
-                  <div className="gallery-carousel-overlay">
-
-                    <div className="gallery-carousel-content">
-
-                      {item.category && (
-                        <span className="gallery-preview-category">
-                          {item.category}
-                        </span>
-                      )}
-
-                      <h3>
-                        {item.title ||
-                          "Event Moment"}
-                      </h3>
-
-                    </div>
-
-                    <span className="gallery-preview-arrow">
-                      <ArrowUpRight size={18} />
+                      <span className="completed-events__card-link">
+                        <ArrowUpRight size={17} />
+                      </span>
                     </span>
 
-                  </div>
+                    <span className="completed-events__card-copy">
+                      <span className="completed-events__event-name">
+                        {item.title || item.event || "Completed Event"}
+                      </span>
 
-                </div>
+                      {item.event && item.event !== item.title && (
+                        <span className="completed-events__event-detail">
+                          {item.event}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                ))}
+              </div>
 
-              </Link>
+              <button
+                type="button"
+                className="completed-events__arrow completed-events__arrow--right"
+                onClick={() => move(1)}
+                aria-label="Next event"
+              >
+                <ChevronRight size={24} />
+              </button>
+            </>
+          )}
+        </div>
+
+        {count > 0 && (
+          <div
+            className="completed-events__pagination"
+            aria-label="Choose event image"
+          >
+            {galleryItems.map((item, index) => (
+              <button
+                type="button"
+                key={item.id}
+                className={
+                  index === activeIndex ? "is-active" : ""
+                }
+                onClick={() => setActiveIndex(index)}
+                aria-label={`Go to image ${index + 1}`}
+                aria-current={
+                  index === activeIndex ? "true" : undefined
+                }
+              />
             ))}
-
           </div>
         )}
 
+        <footer className="completed-events__footer">
+          <span>CELEBRATING THE MOMENTS THAT MATTER</span>
+
+          <button type="button" onClick={openGallery}>
+            Explore All Events <ArrowUpRight size={17} />
+          </button>
+        </footer>
       </div>
     </section>
   );
