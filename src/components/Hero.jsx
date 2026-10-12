@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowDown, ArrowUpRight } from "lucide-react";
@@ -9,23 +10,28 @@ import "./Hero.css";
 function Hero() {
   const [content, setContent] = useState({
     heroLabel: "EVENT MANAGEMENT & EXPERIENCES",
-    heroTitle: "WE CREATE EXPERIENCES.",
+    heroTitle: "WHERE EVERY EVENT BECOMES AN EXPERIENCE.",
     heroDescription:
-      "From meaningful corporate gatherings to unforgettable celebrations, we turn ideas into experiences that people remember.",
-    heroButton: "Explore Events",
-    heroSecondaryButton: "Start a Conversation",
+      "From meaningful corporate gatherings to unforgettable celebrations, we create moments that stay with you.",
+    heroButton: "EXPLORE EVENTS",
+    heroSecondaryButton: "LET'S TALK",
+    introVideoUrl: "",
+    introVideoEnabled: true,
   });
 
+  const [heroContentLoaded, setHeroContentLoaded] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+
   useEffect(() => {
+    let mounted = true;
+
     const loadHeroContent = async () => {
       try {
-        const contentRef = doc(
-          db,
-          "content",
-          "website"
-        );
-
+        const contentRef = doc(db, "content", "website");
         const snapshot = await getDoc(contentRef);
+
+        if (!mounted) return;
 
         if (snapshot.exists()) {
           const data = snapshot.data();
@@ -38,24 +44,40 @@ function Hero() {
           }
         }
       } catch (error) {
-        console.error(
-          "Error loading hero content:",
-          error
-        );
+        console.error("Error loading hero content:", error);
+      } finally {
+        if (mounted) {
+          setHeroContentLoaded(true);
+        }
       }
     };
 
     loadHeroContent();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // Split title into two lines
-  const titleParts = content.heroTitle
-    .trim()
-    .split(" ");
+  const videoUrl = content.introVideoUrl?.trim() || "";
+
+  const videoEnabled =
+    content.introVideoEnabled !== false && Boolean(videoUrl);
+
+  useEffect(() => {
+    setVideoReady(false);
+    setVideoError(false);
+  }, [videoUrl]);
+
+  const heroReady =
+    heroContentLoaded &&
+    (!videoEnabled || videoReady || videoError);
+
+  const titleParts = (content.heroTitle || "").trim().split(/\s+/);
 
   const highlightText =
     titleParts.length > 1
-      ? titleParts.slice(-1).join(" ")
+      ? titleParts[titleParts.length - 1]
       : content.heroTitle;
 
   const mainTitle =
@@ -63,233 +85,230 @@ function Hero() {
       ? titleParts.slice(0, -1).join(" ")
       : "";
 
+
+const textVariants = {
+  hidden: {
+    opacity: 0,
+    y: 45,
+    filter: "blur(10px)",
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: {
+      duration: 1,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+};
+
   return (
     <section className="hero" id="home">
-
-      {/* Cinematic Background */}
-
+      {/* Video background */}
       <div className="hero-background">
+        {videoEnabled && !videoError && (
+          <video
+            key={videoUrl}
+            className={`hero-background-video ${
+              videoReady ? "video-visible" : ""
+            }`}
+            src={videoUrl}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            aria-hidden="true"
+            onCanPlay={() => setVideoReady(true)}
+            onError={() => {
+              console.error("Hero video failed to load.");
+              setVideoError(true);
+              setVideoReady(true);
+            }}
+          />
+        )}
 
-        <div className="hero-glow hero-glow-one"></div>
+        <div className="hero-video-overlay" />
+        <div className="hero-grid" />
+        <div className="hero-noise" />
 
-        <div className="hero-glow hero-glow-two"></div>
-
-        <div className="hero-grid"></div>
-
-        <div className="hero-noise"></div>
-
+        <div className="hero-glow hero-glow-one" />
+        <div className="hero-glow hero-glow-two" />
       </div>
 
-
-      {/* Decorative vertical line */}
-
-      <div className="hero-side-line"></div>
-
-
-      <div className="hero-container">
-
-        <motion.div
-          className="hero-content"
-          initial={{
-            opacity: 0,
-            y: 35,
-          }}
-          animate={{
-            opacity: 1,
-            y: 0,
-          }}
-          transition={{
-            duration: 0.9,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-        >
-
-          {/* Eyebrow */}
-
+      {/* Animated loading screen */}
+      <div
+        className={`hero-loader ${
+          heroReady ? "hero-loader-hidden" : ""
+        }`}
+        aria-hidden={heroReady}
+      >
+        <div className="hero-loader-content">
           <motion.div
-            className="hero-eyebrow"
-            initial={{
-              opacity: 0,
-              x: -20,
-            }}
+            className="hero-loader-logo"
             animate={{
-              opacity: 1,
-              x: 0,
+              scale: [1, 1.08, 1],
+              opacity: [0.7, 1, 0.7],
             }}
             transition={{
-              delay: 0.2,
-              duration: 0.7,
+              duration: 1.8,
+              repeat: Infinity,
+              ease: "easeInOut",
             }}
           >
-            <span></span>
-
-            {content.heroLabel}
-
+            EXPERIENCE
           </motion.div>
 
-
-          {/* Title */}
-
-          <h1>
-
-            <motion.span
-              initial={{
-                opacity: 0,
-                y: 50,
-              }}
-              animate={{
-                opacity: 1,
-                y: 0,
-              }}
+          <div className="hero-loader-track">
+            <motion.div
+              className="hero-loader-progress"
+              animate={{ x: ["-100%", "100%"] }}
               transition={{
-                delay: 0.3,
-                duration: 0.8,
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "easeInOut",
               }}
-            >
-              {mainTitle}
-            </motion.span>
-
-
-            <motion.span
-              className="hero-highlight"
-              initial={{
-                opacity: 0,
-                y: 50,
-              }}
-              animate={{
-                opacity: 1,
-                y: 0,
-              }}
-              transition={{
-                delay: 0.45,
-                duration: 0.8,
-              }}
-            >
-              {highlightText}
-            </motion.span>
-
-          </h1>
-
-
-          {/* Description */}
+            />
+          </div>
 
           <motion.p
-            className="hero-description"
-            initial={{
-              opacity: 0,
-              y: 20,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-            }}
+            animate={{ opacity: [0.45, 1, 0.45] }}
             transition={{
-              delay: 0.65,
-              duration: 0.7,
+              duration: 1.5,
+              repeat: Infinity,
             }}
           >
-            {content.heroDescription}
+            PREPARING YOUR EXPERIENCE
           </motion.p>
 
-
-          {/* Buttons */}
-
-          <motion.div
-            className="hero-actions"
-            initial={{
-              opacity: 0,
-              y: 20,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-            }}
-            transition={{
-              delay: 0.8,
-              duration: 0.7,
-            }}
-          >
-
-            <a
-              href="#events"
-              className="hero-primary-btn"
-            >
-              {content.heroButton}
-
-              <ArrowUpRight size={17} />
-            </a>
-
-
-            <a
-              href="#contact"
-              className="hero-secondary-btn"
-            >
-              {content.heroSecondaryButton}
-            </a>
-
-          </motion.div>
-
-        </motion.div>
-
-
-        {/* Hero visual information */}
-
-        <motion.div
-          className="hero-meta"
-          initial={{
-            opacity: 0,
-          }}
-          animate={{
-            opacity: 1,
-          }}
-          transition={{
-            delay: 1.1,
-            duration: 1,
-          }}
-        >
-          <span>CREATIVE</span>
-          <span>STRATEGY</span>
-          <span>EXPERIENCE</span>
-        </motion.div>
-
+          <div className="hero-loader-dots">
+            <span />
+            <span />
+            <span />
+          </div>
+        </div>
       </div>
 
-
-      {/* Scroll Indicator */}
-
-      <motion.a
-        href="#about"
-        className="scroll-indicator"
-        initial={{
-          opacity: 0,
-        }}
-        animate={{
-          opacity: 1,
-        }}
-        transition={{
-          delay: 1.3,
-        }}
+      {/* Hero content */}
+      <div
+        className={`hero-main ${
+          heroReady ? "hero-main-ready" : ""
+        }`}
+        aria-hidden={!heroReady}
       >
+        <div className="hero-side-line" />
 
-        <span>
-          SCROLL TO EXPLORE
-        </span>
+        <div className="hero-container">
+          <motion.div
+            className="hero-content"
+            initial="hidden"
+            animate={heroReady ? "visible" : "hidden"}
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.16,
+                  delayChildren: 0.1,
+                },
+              },
+            }}
+          >
+            <motion.div
+              className="hero-eyebrow"
+              variants={textVariants}
+            >
+              <span className="hero-eyebrow-line" />
+              {content.heroLabel}
+            </motion.div>
 
-        <motion.div
-          animate={{
-            y: [0, 7, 0],
-          }}
-          transition={{
-            duration: 1.5,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
+            
+<h1>
+  <motion.span
+    className="hero-title-main"
+    variants={textVariants}
+  >
+    {mainTitle}
+  </motion.span>
+
+  <motion.span
+    className="hero-highlight"
+    variants={textVariants}
+    transition={{
+      duration: 1.2,
+      ease: [0.22, 1, 0.36, 1],
+    }}
+  >
+    {highlightText}
+  </motion.span>
+</h1>
+
+            <motion.p
+              className="hero-description"
+              variants={textVariants}
+            >
+              {content.heroDescription}
+            </motion.p>
+
+            <motion.div
+              className="hero-actions"
+              variants={textVariants}
+            >
+              <a href="#events" className="hero-primary-btn">
+                {content.heroButton}
+                <ArrowUpRight size={18} />
+              </a>
+
+              <a href="#contact" className="hero-secondary-btn">
+                {content.heroSecondaryButton}
+              </a>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            className="hero-meta"
+            initial={{ opacity: 0, y: 18 }}
+            animate={
+              heroReady
+                ? { opacity: 1, y: 0 }
+                : { opacity: 0, y: 18 }
+            }
+            transition={{ duration: 0.8, delay: 0.7 }}
+          >
+            <span>CREATIVE</span>
+            <span className="hero-meta-divider" />
+            <span>STRATEGY</span>
+            <span className="hero-meta-divider" />
+            <span>EXPERIENCE</span>
+          </motion.div>
+        </div>
+
+        <motion.a
+          href="#about"
+          className="scroll-indicator"
+          initial={{ opacity: 0, y: 10 }}
+          animate={
+            heroReady
+              ? { opacity: 1, y: 0 }
+              : { opacity: 0, y: 10 }
+          }
+          transition={{ delay: 0.9, duration: 0.7 }}
         >
-          <ArrowDown size={17} />
-        </motion.div>
+          <span>SCROLL TO EXPLORE</span>
 
-      </motion.a>
-
+          <motion.div
+            animate={{ y: [0, 7, 0] }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            <ArrowDown size={17} />
+          </motion.div>
+        </motion.a>
+      </div>
     </section>
   );
 }

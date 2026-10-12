@@ -210,3 +210,62 @@
     width: 100%;
   }
 }
+
+
+/* Opening video settings */
+
+.content-field small {
+  display: block;
+  margin-top: 8px;
+  color: #7b8985;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.content-field select {
+  width: 100%;
+  min-height: 46px;
+  padding: 12px 14px;
+  border: 1px solid rgba(15, 92, 77, 0.14);
+  border-radius: 10px;
+  outline: none;
+  background: #fbfcfb;
+  color: var(--text-dark, #183b34);
+  font-size: 14px;
+}
+
+.content-field select:focus {
+  border-color: var(--teal, #2fa89a);
+  box-shadow: 0 0 0 3px rgba(47, 168, 154, 0.08);
+}
+
+.content-field input[type="file"] {
+  width: 100%;
+  max-width: 100%;
+  padding: 12px;
+  border: 1px dashed rgba(15, 92, 77, 0.3);
+  border-radius: 10px;
+  background: #fbfcfb;
+  color: var(--text-dark, #183b34);
+}
+
+.content-video-preview {
+  display: block;
+  width: 100%;
+  max-height: 420px;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  background: #071a17;
+  object-fit: contain;
+}
+
+.content-save-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .content-video-preview {
+    max-height: 260px;
+  }
+}

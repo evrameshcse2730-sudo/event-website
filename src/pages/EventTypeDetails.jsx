@@ -1,9 +1,12 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowUpRight, Check } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebase/config";
 import "./EventTypeDetails.css";
 
-const eventTypeData = {
+const fallbackEventTypes = {
   "corporate-events": {
     title: "Corporate Events",
     label: "CORPORATE EXPERIENCES",
@@ -20,7 +23,6 @@ const eventTypeData = {
       "Business Experiences",
     ],
   },
-
   weddings: {
     title: "Weddings & Celebrations",
     label: "WEDDINGS & CELEBRATIONS",
@@ -37,7 +39,6 @@ const eventTypeData = {
       "Celebration Management",
     ],
   },
-
   conferences: {
     title: "Conferences & Summits",
     label: "CONFERENCES & SUMMITS",
@@ -54,7 +55,6 @@ const eventTypeData = {
       "Event Operations",
     ],
   },
-
   "product-launches": {
     title: "Product Launches",
     label: "PRODUCT LAUNCHES",
@@ -71,7 +71,6 @@ const eventTypeData = {
       "Launch Events",
     ],
   },
-
   "cultural-events": {
     title: "Cultural Events",
     label: "CULTURAL EXPERIENCES",
@@ -90,23 +89,114 @@ const eventTypeData = {
   },
 };
 
+function makeSlug(value = "") {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 function EventTypeDetails() {
   const { slug } = useParams();
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const event = eventTypeData[slug] || eventTypeData["corporate-events"];
+  useEffect(() => {
+    let mounted = true;
+
+    const loadEventType = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "eventTypes"));
+
+        const matchingDoc = snapshot.docs
+          .map((document) => ({
+            id: document.id,
+            ...document.data(),
+          }))
+          .find((item) => {
+            const itemSlug = item.slug || makeSlug(item.title);
+            return itemSlug === slug && item.status === "published";
+          });
+
+        if (!mounted) return;
+
+        if (matchingDoc) {
+          const fallback =
+            fallbackEventTypes[slug] ||
+            fallbackEventTypes[makeSlug(matchingDoc.title)] ||
+            {};
+
+          setEvent({
+            ...fallback,
+            ...matchingDoc,
+            title: matchingDoc.title || fallback.title || "Event Type",
+            label:
+              matchingDoc.label ||
+              fallback.label ||
+              (matchingDoc.title || "EVENT EXPERIENCE").toUpperCase(),
+            description:
+              matchingDoc.description || fallback.description || "",
+            intro: matchingDoc.intro || fallback.intro || matchingDoc.description || "",
+            services:
+              Array.isArray(matchingDoc.services) && matchingDoc.services.length
+                ? matchingDoc.services
+                : fallback.services || [],
+            imageUrl:
+              matchingDoc.imageUrl ||
+              matchingDoc.image ||
+              matchingDoc.coverImage ||
+              "",
+            videoUrl: matchingDoc.videoUrl || matchingDoc.video || "",
+          });
+        } else {
+          setEvent(fallbackEventTypes[slug] || null);
+        }
+      } catch (error) {
+        console.error("Error loading event type details:", error);
+
+        if (mounted) {
+          setEvent(fallbackEventTypes[slug] || null);
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    setLoading(true);
+    loadEventType();
+
+    return () => {
+      mounted = false;
+    };
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <main className="event-type-details">
+        <div className="container event-type-details__state">
+          Loading event details...
+        </div>
+      </main>
+    );
+  }
+
+  if (!event) {
+    return (
+      <main className="event-type-details">
+        <div className="container event-type-details__state">
+          <h1>Event type not found</h1>
+          <Link to="/event-types">View all event types</Link>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="event-type-details">
-
-      {/* Hero */}
-
       <section className="event-type-details__hero">
         <div className="container">
-
-          <Link
-            to="/event-types"
-            className="event-type-details__back"
-          >
+          <Link to="/event-types" className="event-type-details__back">
             <ArrowLeft size={16} />
             ALL EVENT TYPES
           </Link>
@@ -130,27 +220,17 @@ function EventTypeDetails() {
           <motion.p
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.7,
-              delay: 0.15,
-            }}
+            transition={{ duration: 0.7, delay: 0.15 }}
           >
             {event.description}
           </motion.p>
-
         </div>
       </section>
 
-      {/* Introduction */}
-
       <section className="event-type-details__intro">
         <div className="container">
-
           <div className="event-type-details__intro-grid">
-
-            <span className="section-label">
-              THE EXPERIENCE
-            </span>
+            <span className="section-label">THE EXPERIENCE</span>
 
             <div>
               <h2>
@@ -161,41 +241,59 @@ function EventTypeDetails() {
 
               <p>{event.intro}</p>
 
-              <Link
-                to="/contact"
-                className="event-type-details__cta"
-              >
+              <Link to="/contact" className="event-type-details__cta">
                 PLAN THIS EVENT
                 <ArrowUpRight size={18} />
               </Link>
             </div>
-
           </div>
-
         </div>
       </section>
 
-      {/* Visual */}
-
+      {/* Actual event type image or video */}
       <section className="event-type-details__visual-section">
         <div className="container">
-
           <div className="event-type-details__visual">
-            <span>EVENT EXPERIENCE IMAGE / VIDEO</span>
-          </div>
+            {event.videoUrl ? (
+              <video
+                className="event-type-details__media"
+                src={event.videoUrl}
+                poster={event.imageUrl || undefined}
+                controls
+                playsInline
+                preload="metadata"
+                aria-label={`${event.title} video`}
+              />
+            ) : event.imageUrl ? (
+              <img
+                className="event-type-details__media"
+                src={event.imageUrl}
+                alt={event.title}
+                loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                  e.currentTarget.nextElementSibling?.classList.add("is-visible");
+                }}
+              />
+            ) : null}
 
+            <span
+              className={`event-type-details__visual-placeholder ${
+                !event.imageUrl && !event.videoUrl ? "is-visible" : ""
+              }`}
+            >
+              {event.imageUrl || event.videoUrl
+                ? "Event media could not be displayed"
+                : "Add an image or video in Admin Panel → Event Types"}
+            </span>
+          </div>
         </div>
       </section>
-
-      {/* Services */}
 
       <section className="event-type-details__services">
         <div className="container">
-
           <div className="event-type-details__services-head">
-            <span className="section-label">
-              WHAT WE HANDLE
-            </span>
+            <span className="section-label">WHAT WE HANDLE</span>
 
             <h2>
               EVERYTHING
@@ -206,29 +304,18 @@ function EventTypeDetails() {
 
           <div className="event-type-details__service-list">
             {event.services.map((service, index) => (
-              <div
-                className="event-type-details__service"
-                key={service}
-              >
-                <span>
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-
+              <div className="event-type-details__service" key={service}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
                 <h3>{service}</h3>
-
                 <Check size={18} />
               </div>
             ))}
           </div>
-
         </div>
       </section>
 
-      {/* CTA */}
-
       <section className="event-type-details__bottom">
         <div className="container">
-
           <span>READY TO START?</span>
 
           <h2>
@@ -241,10 +328,8 @@ function EventTypeDetails() {
             START A CONVERSATION
             <ArrowUpRight size={20} />
           </Link>
-
         </div>
       </section>
-
     </main>
   );
 }
