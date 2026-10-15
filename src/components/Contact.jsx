@@ -16,9 +16,11 @@ import { db } from "../firebase/config";
 import "./Contact.css";
 
 
-const SERVICE_ID = "service_71lptkr";
-const TEMPLATE_ID = "template_fnnb11l";
-const PUBLIC_KEY = "zkl8juKKKBeXdmvze";
+
+const SERVICE_ID = "service_de0h9wu";
+const TEMPLATE_ID = "template_ugs5l4o";
+const PUBLIC_KEY = "XamIAfRSoh4oB6M0R";
+
 
 
 function Contact() {
@@ -304,7 +306,7 @@ function Contact() {
           publicKey: PUBLIC_KEY,
         }
       );
-
+console.log("EMAILJS DATA:", data);
 
       emailOK = true;
 

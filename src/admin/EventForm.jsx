@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ImagePlus, UploadCloud, X } from "lucide-react";
 import "./EventForm.css";
 
-const CLOUD_NAME = "db4faz2rs";
+const CLOUD_NAME = "naywosl2";
 const UPLOAD_PRESET = "event_website_uploads";
 
 function EventForm({ event, onSave, onCancel }) {

@@ -14,7 +14,7 @@ import {
 import { db } from "../firebase/config";
 import "./GalleryManager.css";
 
-const CLOUD_NAME = "db4faz2rs";
+const CLOUD_NAME = "naywosl2";
 const UPLOAD_PRESET = "event_website_uploads";
 
 function GalleryManager() {
